@@ -22,6 +22,7 @@ func NewSyncProducer(topic string, kafkaAddrs []string, debug bool) (*SyncProduc
 		debug: debug,
 		json:  jsoniter.ConfigCompatibleWithStandardLibrary,
 	}
+
 	config := sarama.NewConfig()
 
 	config.Producer.RequiredAcks = sarama.NoResponse
@@ -65,6 +66,7 @@ func (producer *SyncProducer) SendWithTopic(topic string, msg []byte) (int32, in
 // SendObjectsWithTopic Send Objects With Topic
 func (producer *SyncProducer) SendObjectsWithTopic(topic string, msgs []interface{}) error {
 	producerMessages := make([]*sarama.ProducerMessage, len(msgs))
+
 	for i := range msgs {
 		buf, err := producer.json.Marshal(msgs[i])
 		if err != nil {

@@ -15,4 +15,6 @@ const (
 	ReadTimeout = 10 * time.Second
 	// WriteTimeout write timeout
 	WriteTimeout = 10 * time.Second
+	// AsyncBuff async producer buff
+	AsyncBuff = 1000
 )
