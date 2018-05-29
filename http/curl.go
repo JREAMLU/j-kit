@@ -25,19 +25,17 @@ const (
 	MaxIdleConnections = 100
 	// MaxConnectionIdleTime 连接池中一个连接可以idle的时长
 	MaxConnectionIdleTime = 60 * time.Second
-	// Timeout timeout
-	Timeout = 3
 )
 
 // NewRequests new requests
-func NewRequests() *Requests {
+func NewRequests(timeout int64) *Requests {
 	return &Requests{
 		HTTPClient: &http.Client{
 			Transport: &http.Transport{
 				MaxIdleConnsPerHost: MaxIdleConnections,
 				IdleConnTimeout:     MaxConnectionIdleTime,
 			},
-			Timeout: time.Duration(Timeout) * time.Second,
+			Timeout: time.Duration(timeout) * time.Second,
 		},
 	}
 }
@@ -88,13 +86,6 @@ RELOAD:
 
 		rp.Data = data
 	}
-
-	err = json.Unmarshal(body, data)
-	if err != nil {
-		return rp, err
-	}
-
-	rp.Data = data
 
 	return rp, nil
 }
