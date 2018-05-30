@@ -14,7 +14,7 @@ const (
 
 func init() {
 	os.Remove(filename)
-	os.RemoveAll(dirname)
+	os.Remove(dirname)
 }
 
 func TestWriteFile(t *testing.T) {
@@ -61,6 +61,20 @@ func TestMkdireAll(t *testing.T) {
 		Convey("correct", func() {
 			err := MkdireAll(dirname)
 			So(err, ShouldBeNil)
+		})
+	})
+}
+
+func TestCheckFileExists(t *testing.T) {
+	Convey("CheckFileExists test", t, func() {
+		Convey("exists", func() {
+			ok := CheckFileExists(filename)
+			So(ok, ShouldBeTrue)
+		})
+
+		Convey("not exists", func() {
+			ok := CheckFileExists(filename + "00")
+			So(ok, ShouldBeFalse)
 		})
 	})
 }
