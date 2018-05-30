@@ -5,19 +5,19 @@ import (
 	"os"
 )
 
-const EmptyStr = ""
+const emptyStr = ""
 
 // ReadAll read all
 func ReadAll(path string) (string, error) {
 	fi, err := os.Open(path)
 	if err != nil {
-		return EmptyStr, err
+		return emptyStr, err
 	}
 
 	defer fi.Close()
 	fd, err := ioutil.ReadAll(fi)
 	if err != nil {
-		return EmptyStr, err
+		return emptyStr, err
 	}
 
 	return string(fd), nil
@@ -36,16 +36,19 @@ func ReadAllBytes(path string) ([]byte, error) {
 // WriteFile write file
 func WriteFile(path, content string, isOverride bool) error {
 	var flag int
+
 	if isOverride {
 		flag = os.O_CREATE | os.O_RDWR | os.O_TRUNC
 	} else {
 		flag = os.O_CREATE | os.O_EXCL | os.O_RDWR
 	}
+
 	f, err := os.OpenFile(path, flag, 0666)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
 	f.WriteString(content)
 	return nil
 }
@@ -58,15 +61,17 @@ func MkdireAll(path string) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 // CheckFileExists check file exists
 func CheckFileExists(filePath string) bool {
-	if _, err := os.Stat(filePath); os.IsExist(err) {
-		return true
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return false
 	}
-	return false
+
+	return true
 }
 
 // CreateFileOfTrunc create file of trunc
@@ -74,6 +79,7 @@ func CreateFileOfTrunc(filePath string) (*os.File, error) {
 	if CheckFileExists(filePath) {
 		return os.OpenFile(filePath, os.O_TRUNC, 0666)
 	}
+
 	return os.Create(filePath)
 }
 
