@@ -3,21 +3,21 @@ package ioutil
 import (
 	"io/ioutil"
 	"os"
-)
 
-const emptyStr = ""
+	"github.com/JREAMLU/j-core/constant"
+)
 
 // ReadAll read all
 func ReadAll(path string) (string, error) {
 	fi, err := os.Open(path)
 	if err != nil {
-		return emptyStr, err
+		return constant.EmptyStr, err
 	}
 
 	defer fi.Close()
 	fd, err := ioutil.ReadAll(fi)
 	if err != nil {
-		return emptyStr, err
+		return constant.EmptyStr, err
 	}
 
 	return string(fd), nil
