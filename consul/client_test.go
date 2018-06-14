@@ -1,7 +1,6 @@
 package consul
 
 import (
-	"fmt"
 	"path"
 	"testing"
 
@@ -129,16 +128,50 @@ func initTestData() {
 
 func TestConsul(t *testing.T) {
 	Convey("get test", t, func() {
-		Convey("get", func() {
-			value, err := testClient.Get(path.Join(MYSQL, "BGCrawlerTest"))
-			fmt.Println("++++++++++++: ", value, err)
+		Convey("get mysql", func() {
+			value, err := testClient.Get(path.Join(MYSQL, "BGCrawler-Test"))
+			So(err, ShouldBeNil)
+			So(value, ShouldNotBeEmpty)
+		})
+
+		Convey("get zookeeper", func() {
+			value, err := testClient.Get(path.Join(Zookeeper, "Zipkin-Test"))
+			So(err, ShouldBeNil)
+			So(value, ShouldNotBeEmpty)
+		})
+
+		Convey("get redis", func() {
+			value, err := testClient.Get(path.Join(Redis, "BGCrawler-Cluster-Test"))
+			So(err, ShouldBeNil)
+			So(value, ShouldNotBeEmpty)
+		})
+
+		Convey("get kafka", func() {
+			value, err := testClient.Get(path.Join(Kafka, "Zipkin-Test"))
+			So(err, ShouldBeNil)
+			So(value, ShouldNotBeEmpty)
 		})
 	})
 
-	// Convey("delete test", t, func() {
-	// 	Convey("delete", func() {
-	// 		err := testClient.Delete(path.Join(MYSQL, "BGCrawlerTest"))
-	// 		fmt.Println("++++++++++++: ", err)
-	// 	})
-	// })
+	Convey("delete test", t, func() {
+		Convey("delete mysql", func() {
+			err := testClient.Delete(path.Join(MYSQL, "BGCrawler-Test"))
+			So(err, ShouldBeNil)
+		})
+
+		Convey("delete zookeeper", func() {
+			err := testClient.Delete(path.Join(Zookeeper, "Zipkin-Test"))
+			So(err, ShouldBeNil)
+		})
+
+		Convey("delete redis", func() {
+			err := testClient.Delete(path.Join(Redis, "BGCrawler-Cluster-Test"))
+			So(err, ShouldBeNil)
+		})
+
+		Convey("delete kafka", func() {
+			err := testClient.Delete(path.Join(Kafka, "Zipkin-Test"))
+			So(err, ShouldBeNil)
+		})
+	})
 }
