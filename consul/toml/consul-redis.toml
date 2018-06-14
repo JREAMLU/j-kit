@@ -1,0 +1,35 @@
+[[master]]
+Name = "crawler_cluster"
+DB = "0"
+IP = "127.0.0.1"
+Port = "29010"
+PoolSize = 10.0
+IsCluster = true
+IsMaster = true
+
+[[master]]
+Name = "crawler_cluster"
+DB = "0"
+IP = "127.0.0.1"
+Port = "29011"
+PoolSize = 10.0
+IsCluster = true
+IsMaster = true
+
+[[slave]]
+Name = "crawler_cluster"
+DB = "0"
+IP = "127.0.0.1"
+Port = "29012"
+PoolSize = 10.0
+IsCluster = true
+IsMaster = false
+
+[[slave]]
+Name = "crawler_cluster"
+DB = "0"
+IP = "127.0.0.1"
+Port = "29013"
+PoolSize = 10.0
+IsCluster = true
+IsMaster = false

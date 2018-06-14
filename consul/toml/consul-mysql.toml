@@ -1,0 +1,16 @@
+InstanceName = "BGCrawler"
+DBName = "crawler"
+
+[readwrite]
+Server = "127.0.0.1"
+Port = "3306"
+UserID = "root"
+Password = "a1b2c3d4"
+CharSet = "utf8mb4"
+
+[readonly]
+Server = "127.0.0.1"
+Port = "3306"
+UserID = "root"
+Password = "a1b2c3d4"
+CharSet = "utf8mb4"
