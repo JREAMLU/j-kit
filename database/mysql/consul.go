@@ -9,6 +9,7 @@ import (
 	"github.com/JREAMLU/j-core/consul"
 	"github.com/JREAMLU/j-core/ext"
 	"github.com/jinzhu/gorm"
+	// mysql driver
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
@@ -70,6 +71,11 @@ func LoadConfig(consulAddr string, names ...string) (map[string]*gorm.DB, error)
 	return loadByNames(client, names)
 }
 
+// GetReadOnly get readonly
+func GetReadOnly(name string) string {
+	return ext.StringSplice(name, READONLY)
+}
+
 func loadByNames(client *consul.Client, names []string) (map[string]*gorm.DB, error) {
 	for i := range names {
 		names[i] = path.Join(consul.MYSQL, names[i])
@@ -115,7 +121,7 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 			return nil, err
 		}
 		lock.Lock()
-		dbs[ext.StringSplice(instanceName, READONLY)] = rdb
+		dbs[GetReadOnly(instanceName)] = rdb
 		lock.Unlock()
 	}
 
