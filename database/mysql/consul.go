@@ -63,7 +63,15 @@ func LoadConfig(consulAddr string, names ...string) (map[string]*gorm.DB, error)
 		return nil, err
 	}
 
-	return loadAll(client)
+	if len(names) == 0 {
+		return loadAll(client)
+	}
+
+	return loadByNames(client, names)
+}
+
+func loadByNames(client *consul.Client, names []string) (map[string]*gorm.DB, error) {
+	return nil, nil
 }
 
 func loadAll(client *consul.Client) (map[string]*gorm.DB, error) {
