@@ -12,8 +12,18 @@ const (
 
 func TestLoadConfig(t *testing.T) {
 	Convey("load mysql test", t, func() {
-		Convey("all", func() {
+		Convey("load by name", func() {
 			dbs, err := Load(consulAddr, "BGCrawler")
+			So(err, ShouldBeNil)
+			So(len(dbs), ShouldBeGreaterThan, 0)
+			for _, db := range dbs {
+				err := db.Close()
+				So(err, ShouldBeNil)
+			}
+		})
+
+		Convey("load all", func() {
+			dbs, err := Load(consulAddr)
 			So(err, ShouldBeNil)
 			So(len(dbs), ShouldBeGreaterThan, 0)
 			for _, db := range dbs {

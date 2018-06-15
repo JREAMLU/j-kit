@@ -71,7 +71,11 @@ func LoadConfig(consulAddr string, names ...string) (map[string]*gorm.DB, error)
 }
 
 func loadByNames(client *consul.Client, names []string) (map[string]*gorm.DB, error) {
-	return nil, nil
+	for i := range names {
+		names[i] = path.Join(consul.MYSQL, names[i])
+	}
+
+	return loadConfig(client, names)
 }
 
 func loadAll(client *consul.Client) (map[string]*gorm.DB, error) {
