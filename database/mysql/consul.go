@@ -9,6 +9,7 @@ import (
 	"github.com/JREAMLU/j-core/consul"
 	"github.com/JREAMLU/j-core/ext"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 const (
@@ -51,9 +52,8 @@ type readonly struct {
 }
 
 // Load load mysql
-func Load(consulAddr string, names ...string) error {
-	LoadConfig(consulAddr, names...)
-	return nil
+func Load(consulAddr string, names ...string) (map[string]*gorm.DB, error) {
+	return LoadConfig(consulAddr, names...)
 }
 
 // LoadConfig load config
@@ -74,6 +74,7 @@ func loadAll(client *consul.Client) (map[string]*gorm.DB, error) {
 
 	return loadConfig(client, keys)
 }
+
 func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, error) {
 	var dbs = make(map[string]*gorm.DB, len(keys)*2)
 	for _, key := range keys {
@@ -87,6 +88,7 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 			return nil, err
 		}
 
+		// read and write
 		rwdb, err := registerDatabase(instanceName, config, true)
 		if err != nil {
 			return nil, err
@@ -95,6 +97,7 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		dbs[instanceName] = rwdb
 		lock.Unlock()
 
+		// readonly
 		rdb, err := registerDatabase(instanceName, config, false)
 		if err != nil {
 			return nil, err
@@ -109,15 +112,27 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 
 func registerDatabase(name string, config Config, isWrite bool) (*gorm.DB, error) {
 	if isWrite {
+		var charset string
+		if config.ReadWrite.CharSet == "" {
+			charset = "utf8"
+		} else {
+			charset = config.ReadWrite.CharSet
+		}
 		conn := fmt.Sprintf(Conn, config.ReadWrite.UserID, config.ReadWrite.Password,
-			config.ReadWrite.Server, config.ReadWrite.Port, config.DBName, config.ReadWrite.CharSet, Local)
+			config.ReadWrite.Server, config.ReadWrite.Port, config.DBName, charset, Local)
 		db, err := gorm.Open(Driver, conn)
 
 		return db, err
 	}
 
+	var charset string
+	if config.ReadOnly.CharSet == "" {
+		charset = "utf8"
+	} else {
+		charset = config.ReadOnly.CharSet
+	}
 	conn := fmt.Sprintf(Conn, config.ReadOnly.UserID, config.ReadOnly.Password,
-		config.ReadOnly.Server, config.ReadOnly.Port, config.DBName, config.ReadOnly.CharSet, Local)
+		config.ReadOnly.Server, config.ReadOnly.Port, config.DBName, charset, Local)
 	db, err := gorm.Open(Driver, conn)
 
 	return db, err
