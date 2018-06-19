@@ -41,6 +41,7 @@ func TestLoadConfig(t *testing.T) {
 
 func TestSQL(t *testing.T) {
 	load()
+	var uid int64
 	Convey("sql test", t, func() {
 		Convey("insert", func() {
 			cron := Cron{
@@ -49,30 +50,36 @@ func TestSQL(t *testing.T) {
 			id, err := insert(cron)
 			So(err, ShouldBeNil)
 			So(id, ShouldBeGreaterThan, constant.ZeroInt64)
+			uid = id
 		})
 
 		Convey("query", func() {
-			crons, err := query([]int64{1})
+			crons, err := query([]int64{uid})
 			So(err, ShouldBeNil)
 			So(len(crons), ShouldBeGreaterThan, 0)
 		})
 
 		Convey("raw query", func() {
-			crons, err := queryRaw([]int64{1})
+			crons, err := queryRaw([]int64{uid})
 			So(err, ShouldBeNil)
 			So(len(crons), ShouldBeGreaterThan, 0)
 		})
 
 		Convey("update", func() {
-			cron, err := update(1)
+			cron, err := update(uid)
 			So(err, ShouldBeNil)
 			So(cron, ShouldNotBeEmpty)
 		})
 
 		Convey("updates", func() {
-			cron, err := updates(1)
+			cron, err := updates(uid)
 			So(err, ShouldBeNil)
 			So(cron, ShouldNotBeEmpty)
+		})
+
+		Convey("deletes", func() {
+			err := deletes([]int64{uid})
+			So(err, ShouldBeNil)
 		})
 	})
 }
@@ -111,7 +118,7 @@ func insert(cron Cron) (int64, error) {
 }
 
 func query(ids []int64) (crons []Cron, err error) {
-	result := db(false).Where("ID in (?)", ids).Find(&crons)
+	result := db(false).Where("ID IN (?)", ids).Find(&crons)
 	if result.Error != nil {
 		return crons, result.Error
 	}
@@ -149,6 +156,15 @@ func updates(id int64) (cron Cron, err error) {
 	}
 
 	return cron, nil
+}
+
+func deletes(ids []int64) error {
+	result := db(true).Delete(Cron{}, "ID IN (?)", ids)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
 /*
