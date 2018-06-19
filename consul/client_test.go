@@ -12,8 +12,6 @@ var (
 )
 
 const (
-	testKey        = "conn/redis/config/master/1/ip"
-	testKeyPrefix  = "conn/redis/config/master/0"
 	testValue      = "172.16.9.221"
 	testConsulAddr = "10.200.202.35:8500"
 	mysqlToml      = `InstanceName = "BGCrawler"
