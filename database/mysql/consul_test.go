@@ -46,7 +46,14 @@ func TestSQL(t *testing.T) {
 				Name: "jream",
 			}
 			id, err := insert(cron)
-			fmt.Println("++++++++++++: ", id, err)
+			So(err, ShouldBeNil)
+			So(id, ShouldBeGreaterThan, constant.ZeroInt64)
+		})
+
+		Convey("query", func() {
+			crons, err := query([]int64{1, 2})
+			So(err, ShouldBeNil)
+			fmt.Println("++++++++++++: ", crons)
 		})
 	})
 }
@@ -70,7 +77,7 @@ func db(isWrite bool) *gorm.DB {
 }
 
 type Cron struct {
-	ID   uint64 `gorm:"column:ID;primary_key"`
+	ID   int64  `gorm:"column:ID;primary_key"`
 	Name string `gorm:"column:Name"`
 }
 
@@ -78,13 +85,22 @@ func (cron Cron) TableName() string {
 	return cronTable
 }
 
-func insert(cron Cron) (uint64, error) {
+func insert(cron Cron) (int64, error) {
 	result := db(true).Create(&cron)
 	if result.Error != nil {
-		return constant.ZeroUint64, result.Error
+		return constant.ZeroInt64, result.Error
 	}
 
 	return cron.ID, nil
+}
+
+func query(ids []int64) (crons []Cron, err error) {
+	result := db(false).Where("ID in (?)", ids).Find(&crons)
+	if result.Error != nil {
+		return crons, result.Error
+	}
+
+	return crons, nil
 }
 
 /*
