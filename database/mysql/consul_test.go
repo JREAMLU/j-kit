@@ -16,8 +16,9 @@ const (
 func TestLoadConfig(t *testing.T) {
 	Convey("load mysql test", t, func() {
 		Convey("load by name", func() {
-			dbs, err := Load(consulAddr, "BGCrawler")
+			err := Load(consulAddr, "BGCrawler")
 			So(err, ShouldBeNil)
+			dbs := GetAllDB()
 			So(len(dbs), ShouldBeGreaterThan, 0)
 			for _, db := range dbs {
 				err := db.Close()
@@ -26,8 +27,9 @@ func TestLoadConfig(t *testing.T) {
 		})
 
 		Convey("load all", func() {
-			dbs, err := Load(consulAddr)
+			err := Load(consulAddr)
 			So(err, ShouldBeNil)
+			dbs := GetAllDB()
 			So(len(dbs), ShouldBeGreaterThan, 0)
 			for _, db := range dbs {
 				err := db.Close()
@@ -63,11 +65,8 @@ func TestSQL(t *testing.T) {
 	})
 }
 
-var gx map[string]*gorm.DB
-
 func load() {
-	var err error
-	gx, err = Load(consulAddr, "BGCrawler")
+	err := Load(consulAddr, "BGCrawler")
 	if err != nil {
 		panic(err)
 	}
@@ -75,10 +74,10 @@ func load() {
 
 func db(isWrite bool) *gorm.DB {
 	if isWrite {
-		return gx["BGCrawler"]
+		return GetDB("BGCrawler")
 	}
 
-	return gx[GetReadOnly("BGCrawler")]
+	return GetReadOnlyDB("BGCrawler")
 }
 
 type Cron struct {

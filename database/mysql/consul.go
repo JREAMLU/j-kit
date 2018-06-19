@@ -52,9 +52,17 @@ type readonly struct {
 	CharSet  string
 }
 
+var gx map[string]*gorm.DB
+
 // Load load mysql
-func Load(consulAddr string, names ...string) (map[string]*gorm.DB, error) {
-	return LoadConfig(consulAddr, names...)
+func Load(consulAddr string, names ...string) error {
+	var err error
+	gx, err = LoadConfig(consulAddr, names...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // LoadConfig load config
@@ -74,6 +82,29 @@ func LoadConfig(consulAddr string, names ...string) (map[string]*gorm.DB, error)
 // GetReadOnly get readonly
 func GetReadOnly(name string) string {
 	return ext.StringSplice(name, READONLY)
+}
+
+// GetDB get instance db
+func GetDB(name string) *gorm.DB {
+	if _, ok := gx[name]; ok {
+		return gx[name]
+	}
+
+	return nil
+}
+
+// GetReadOnlyDB get instance readonly db
+func GetReadOnlyDB(name string) *gorm.DB {
+	if _, ok := gx[GetReadOnly(name)]; ok {
+		return gx[GetReadOnly(name)]
+	}
+
+	return nil
+}
+
+// GetAllDB get all db
+func GetAllDB() map[string]*gorm.DB {
+	return gx
 }
 
 func loadByNames(client *consul.Client, names []string) (map[string]*gorm.DB, error) {
