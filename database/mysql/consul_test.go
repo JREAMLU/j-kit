@@ -11,6 +11,7 @@ import (
 
 const (
 	consulAddr = "10.200.202.35:8500"
+	cronTable  = "Cron"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -69,8 +70,12 @@ func db(isWrite bool) *gorm.DB {
 }
 
 type Cron struct {
-	ID   uint64 `gorm:"primary_key"`
+	ID   uint64 `gorm:"column:ID;primary_key"`
 	Name string `gorm:"column:Name"`
+}
+
+func (cron Cron) TableName() string {
+	return cronTable
 }
 
 func insert(cron Cron) (uint64, error) {
