@@ -81,6 +81,11 @@ func TestSQL(t *testing.T) {
 			err := deletes([]int64{uid})
 			So(err, ShouldBeNil)
 		})
+
+		Convey("transact", func() {
+			err := transact()
+			So(err, ShouldBeNil)
+		})
 	})
 }
 
@@ -163,6 +168,27 @@ func deletes(ids []int64) error {
 	if result.Error != nil {
 		return result.Error
 	}
+
+	return nil
+}
+
+func transact() error {
+	tx := db(true).Begin()
+	cron := Cron{
+		Name: "jream-tx",
+	}
+	id, err := insert(cron)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = deletes([]int64{id})
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
 
 	return nil
 }
