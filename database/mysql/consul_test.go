@@ -62,6 +62,18 @@ func TestSQL(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(len(crons), ShouldBeGreaterThan, 0)
 		})
+
+		Convey("update", func() {
+			cron, err := update(1)
+			So(err, ShouldBeNil)
+			So(cron, ShouldNotBeEmpty)
+		})
+
+		Convey("updates", func() {
+			cron, err := updates(1)
+			So(err, ShouldBeNil)
+			So(cron, ShouldNotBeEmpty)
+		})
 	})
 }
 
@@ -119,6 +131,24 @@ WHERE ID IN (?)
 	}
 
 	return crons, nil
+}
+
+func update(id int64) (cron Cron, err error) {
+	result := db(true).Model(&cron).Where("ID = ?", id).Update("Name", "LUj").Find(&cron)
+	if result.Error != nil {
+		return cron, result.Error
+	}
+
+	return cron, nil
+}
+
+func updates(id int64) (cron Cron, err error) {
+	result := db(true).Model(&cron).Where("ID = ?", id).Updates(&Cron{Name: "JREAM"}).Find(&cron)
+	if result.Error != nil {
+		return cron, result.Error
+	}
+
+	return cron, nil
 }
 
 /*
