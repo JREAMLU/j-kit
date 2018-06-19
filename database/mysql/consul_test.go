@@ -169,8 +169,8 @@ func deletes(ids []int64) error {
 
 /*
 CREATE TABLE `Crawler` (
-	`ID` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'ID，自增长',
-	`Name` varchar(30) NOT NULL DEFAULT '' COMMENT '姓名',
+	`ID` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'INCREMENT ID',
+	`Name` varchar(30) NOT NULL DEFAULT '' COMMENT 'Name',
 	PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Crawler';
 */
