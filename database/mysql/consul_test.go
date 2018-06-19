@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/JREAMLU/j-core/constant"
@@ -51,9 +50,15 @@ func TestSQL(t *testing.T) {
 		})
 
 		Convey("query", func() {
-			crons, err := query([]int64{1, 2})
+			crons, err := query([]int64{1})
 			So(err, ShouldBeNil)
-			fmt.Println("++++++++++++: ", crons)
+			So(len(crons), ShouldBeGreaterThan, 0)
+		})
+
+		Convey("raw query", func() {
+			crons, err := queryRaw([]int64{1})
+			So(err, ShouldBeNil)
+			So(len(crons), ShouldBeGreaterThan, 0)
 		})
 	})
 }
@@ -96,6 +101,20 @@ func insert(cron Cron) (int64, error) {
 
 func query(ids []int64) (crons []Cron, err error) {
 	result := db(false).Where("ID in (?)", ids).Find(&crons)
+	if result.Error != nil {
+		return crons, result.Error
+	}
+
+	return crons, nil
+}
+
+func queryRaw(ids []int64) (crons []Cron, err error) {
+	sql := `
+SELECT  ID, Name
+FROM cron
+WHERE ID IN (?)
+`
+	result := db(false).Raw(sql, ids).Scan(&crons)
 	if result.Error != nil {
 		return crons, result.Error
 	}
