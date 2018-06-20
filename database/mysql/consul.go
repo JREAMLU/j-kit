@@ -2,12 +2,14 @@ package mysql
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"sync"
 
 	"github.com/BurntSushi/toml"
 	"github.com/JREAMLU/j-core/consul"
 	"github.com/JREAMLU/j-core/ext"
+	"github.com/hashicorp/consul/api"
 	"github.com/jinzhu/gorm"
 	// mysql driver
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -54,10 +56,40 @@ type readonly struct {
 
 var gx map[string]*gorm.DB
 
+// Watch watch
+func Watch(consulAddr string, needReloadConfig chan string, names ...string) {
+	for i := range names {
+		go func(name string) {
+			consul.WatchKey(consulAddr, path.Join(consul.MYSQL, name), func(kvPair *api.KVPair) {
+				needReloadConfig <- name
+			})
+		}(names[i])
+	}
+}
+
+func watching(consulAddr string, names ...string) {
+	watchdNode := make(chan string)
+	Watch(consulAddr, watchdNode, names...)
+	go func() {
+		for {
+			select {
+			case node := <-watchdNode:
+				log.Printf("changed: %v \r\n", node)
+				ngx, err := LoadConfig(consulAddr, false, node)
+				if err != nil {
+					log.Printf("Failed on mysql LoadConfig, changedNode: %v, err: %v \r\n", node, err)
+					continue
+				}
+				gx = ngx
+			}
+		}
+	}()
+}
+
 // Load load mysql
-func Load(consulAddr string, names ...string) error {
+func Load(consulAddr string, isWatching bool, names ...string) error {
 	var err error
-	gx, err = LoadConfig(consulAddr, names...)
+	gx, err = LoadConfig(consulAddr, isWatching, names...)
 	if err != nil {
 		return err
 	}
@@ -66,10 +98,14 @@ func Load(consulAddr string, names ...string) error {
 }
 
 // LoadConfig load config
-func LoadConfig(consulAddr string, names ...string) (map[string]*gorm.DB, error) {
+func LoadConfig(consulAddr string, isWatching bool, names ...string) (map[string]*gorm.DB, error) {
 	client, err := consul.NewClient(consul.SetAddress(consulAddr))
 	if err != nil {
 		return nil, err
+	}
+
+	if isWatching {
+		watching(consulAddr, names...)
 	}
 
 	if len(names) == 0 {

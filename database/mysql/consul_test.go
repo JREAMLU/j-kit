@@ -16,7 +16,7 @@ const (
 func TestLoadConfig(t *testing.T) {
 	Convey("load mysql test", t, func() {
 		Convey("load by name", func() {
-			err := Load(consulAddr, "BGCrawler")
+			err := Load(consulAddr, false, "BGCrawler")
 			So(err, ShouldBeNil)
 			dbs := GetAllDB()
 			So(len(dbs), ShouldBeGreaterThan, 0)
@@ -27,7 +27,7 @@ func TestLoadConfig(t *testing.T) {
 		})
 
 		Convey("load all", func() {
-			err := Load(consulAddr)
+			err := Load(consulAddr, false)
 			So(err, ShouldBeNil)
 			dbs := GetAllDB()
 			So(len(dbs), ShouldBeGreaterThan, 0)
@@ -90,7 +90,7 @@ func TestSQL(t *testing.T) {
 }
 
 func load() {
-	err := Load(consulAddr, "BGCrawler")
+	err := Load(consulAddr, true, "BGCrawler")
 	if err != nil {
 		panic(err)
 	}
