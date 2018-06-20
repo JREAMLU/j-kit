@@ -12,7 +12,6 @@ var (
 )
 
 const (
-	testValue      = "172.16.9.221"
 	testConsulAddr = "10.200.202.35:8500"
 	mysqlToml      = `InstanceName = "BGCrawler"
 DBName = "crawler"
