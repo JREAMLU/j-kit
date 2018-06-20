@@ -15,7 +15,7 @@ func TestLoadConfig(t *testing.T) {
 	Convey("load redis test", t, func() {
 		Convey("load all", func() {
 			err := Load(consulAddr, false)
-			fmt.Println("++++++++++++: ", err)
+			fmt.Println("++++++++++++: 1", err)
 		})
 	})
 }
