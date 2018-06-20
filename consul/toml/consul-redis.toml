@@ -1,5 +1,6 @@
+InstanceName = "CrawlerCluster"
+
 [[master]]
-Name = "crawler_cluster"
 DB = "0"
 IP = "127.0.0.1"
 Port = "29010"
@@ -8,7 +9,6 @@ IsCluster = true
 IsMaster = true
 
 [[master]]
-Name = "crawler_cluster"
 DB = "0"
 IP = "127.0.0.1"
 Port = "29011"
@@ -17,7 +17,6 @@ IsCluster = true
 IsMaster = true
 
 [[slave]]
-Name = "crawler_cluster"
 DB = "0"
 IP = "127.0.0.1"
 Port = "29012"
@@ -26,7 +25,6 @@ IsCluster = true
 IsMaster = false
 
 [[slave]]
-Name = "crawler_cluster"
 DB = "0"
 IP = "127.0.0.1"
 Port = "29013"
