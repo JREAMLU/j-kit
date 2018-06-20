@@ -1,7 +1,7 @@
 package consul
 
 import (
-	"fmt"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -35,7 +35,8 @@ func TestWatch(t *testing.T) {
 		Convey("watch key", func() {
 			err := testWatch(t, testKeyWatch, func(wg *sync.WaitGroup) {
 				WatchKey(testConsulAddrWatch, testKeyWatch, func(kvPair *api.KVPair) {
-					fmt.Println("++++++++++++: ", string(kvPair.Value))
+					t.Log(kvPair.Key)
+					t.Log(string(kvPair.Value))
 					wg.Done()
 				})
 			})
@@ -44,10 +45,11 @@ func TestWatch(t *testing.T) {
 		})
 
 		Convey("watch keyprefix", func() {
-			err := testWatch(t, testKeyWatch, func(wg *sync.WaitGroup) {
+			err := testWatch(t, filepath.Join(testKeyPrefixWatch, "ip"), func(wg *sync.WaitGroup) {
 				WatchKeyPrefix(testConsulAddrWatch, testKeyPrefixWatch, func(kvPairs api.KVPairs) {
 					for k := range kvPairs {
-						fmt.Println("++++++++++++: ", string(kvPairs[k].Value))
+						t.Log(kvPairs[k].Key)
+						t.Log(string(kvPairs[k].Value))
 					}
 					wg.Done()
 				})
