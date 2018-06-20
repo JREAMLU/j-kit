@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"path"
 
 	"github.com/JREAMLU/j-core/consul"
@@ -72,20 +71,14 @@ func loadAll(client *consul.Client) error {
 }
 
 func loadConfig(client *consul.Client, prefixKeys []string) error {
-	loadMasterOrSlave := func(key, instanceName string, isMaster MasterSlave) error {
-		keys, err := client.GetChildKeys(key)
+	load := func(key, instanceName string, isMaster MasterSlave) error {
+		keyPath, err := client.Get(key)
 		if err != nil {
 			return err
 		}
 
-		if len(keys) == 0 && isMaster {
-			return fmt.Errorf(consul.DirNotExist, key)
-		}
-
-		for i := range keys {
-			if err = loadNode(client, isMaster, keys[i], instanceName); err != nil {
-				return err
-			}
+		if err = loadNode(client, isMaster, keyPath, instanceName); err != nil {
+			return err
 		}
 
 		return nil
@@ -93,10 +86,7 @@ func loadConfig(client *consul.Client, prefixKeys []string) error {
 
 	for _, key := range prefixKeys {
 		instanceName := path.Base(key)
-		if err := loadMasterOrSlave(key, instanceName, true); err != nil {
-			return err
-		}
-		if err := loadMasterOrSlave(key, instanceName, false); err != nil {
+		if err := load(key, instanceName, true); err != nil {
 			return err
 		}
 	}
