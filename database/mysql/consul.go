@@ -26,6 +26,10 @@ const (
 	Charset = "utf8"
 	// READONLY readonly
 	READONLY = "ReadOnly"
+	// MaxOpenConns max open conns
+	MaxOpenConns = 200
+	// MaxIdleConns max idle conns
+	MaxIdleConns = 60
 )
 
 var lock sync.Mutex
@@ -178,6 +182,8 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		if err != nil {
 			return nil, err
 		}
+		rwdb.DB().SetMaxOpenConns(MaxOpenConns)
+		rwdb.DB().SetMaxIdleConns(MaxIdleConns)
 		lock.Lock()
 		dbs[instanceName] = rwdb
 		lock.Unlock()
@@ -187,6 +193,8 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		if err != nil {
 			return nil, err
 		}
+		rdb.DB().SetMaxOpenConns(MaxOpenConns)
+		rdb.DB().SetMaxIdleConns(MaxIdleConns)
 		lock.Lock()
 		dbs[GetReadOnly(instanceName)] = rdb
 		lock.Unlock()
