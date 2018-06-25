@@ -182,6 +182,7 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		if err != nil {
 			return nil, err
 		}
+		// set pool
 		rwdb.DB().SetMaxOpenConns(MaxOpenConns)
 		rwdb.DB().SetMaxIdleConns(MaxIdleConns)
 		lock.Lock()

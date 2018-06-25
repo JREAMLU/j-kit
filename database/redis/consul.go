@@ -1,8 +1,10 @@
 package redis
 
 import (
+	"fmt"
 	"path"
 
+	"github.com/BurntSushi/toml"
 	"github.com/JREAMLU/j-core/consul"
 )
 
@@ -20,7 +22,7 @@ type master struct {
 	DB        string
 	IP        string
 	Port      string
-	PoolSize  int
+	PoolSize  int64
 	IsCluster bool
 	IsMaster  bool
 }
@@ -29,7 +31,7 @@ type slave struct {
 	DB        string
 	IP        string
 	Port      string
-	PoolSize  int
+	PoolSize  int64
 	IsCluster bool
 	IsMaster  bool
 }
@@ -61,7 +63,6 @@ func LoadConfig(consulAddr string, isWatching bool, names ...string) error {
 }
 
 func loadAll(client *consul.Client) error {
-	// 获取所有实例的key
 	keys, err := client.GetChildKeys(consul.Redis)
 	if err != nil {
 		return err
@@ -72,12 +73,12 @@ func loadAll(client *consul.Client) error {
 
 func loadConfig(client *consul.Client, prefixKeys []string) error {
 	load := func(key, instanceName string, isMaster MasterSlave) error {
-		keyPath, err := client.Get(key)
+		val, err := client.Get(key)
 		if err != nil {
 			return err
 		}
 
-		if err = loadNode(client, isMaster, keyPath, instanceName); err != nil {
+		if err = loadNode(client, isMaster, val, instanceName); err != nil {
 			return err
 		}
 
@@ -94,6 +95,12 @@ func loadConfig(client *consul.Client, prefixKeys []string) error {
 	return nil
 }
 
-func loadNode(client *consul.Client, isMaster MasterSlave, keyPre, instanceName string) error {
+func loadNode(client *consul.Client, isMaster MasterSlave, val, instanceName string) error {
+	var configs Configs
+	if _, err := toml.Decode(val, &configs); err != nil {
+		return err
+	}
+	fmt.Println("++++++++++++: ", configs)
+
 	return nil
 }

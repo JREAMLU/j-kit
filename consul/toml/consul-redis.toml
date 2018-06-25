@@ -4,7 +4,7 @@ InstanceName = "CrawlerCluster"
 DB = "0"
 IP = "127.0.0.1"
 Port = "29010"
-PoolSize = 10.0
+PoolSize = 10
 IsCluster = true
 IsMaster = true
 
@@ -12,7 +12,7 @@ IsMaster = true
 DB = "0"
 IP = "127.0.0.1"
 Port = "29011"
-PoolSize = 10.0
+PoolSize = 10
 IsCluster = true
 IsMaster = true
 
@@ -20,7 +20,7 @@ IsMaster = true
 DB = "0"
 IP = "127.0.0.1"
 Port = "29012"
-PoolSize = 10.0
+PoolSize = 10
 IsCluster = true
 IsMaster = false
 
@@ -28,6 +28,6 @@ IsMaster = false
 DB = "0"
 IP = "127.0.0.1"
 Port = "29013"
-PoolSize = 10.0
+PoolSize = 10
 IsCluster = true
 IsMaster = false
