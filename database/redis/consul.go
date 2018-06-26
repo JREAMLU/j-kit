@@ -47,11 +47,25 @@ func LoadConfig(consulAddr string, isWatching bool, names ...string) error {
 		return err
 	}
 
-	if err = loadAll(client); err != nil {
-		return err
+	if len(names) == 0 {
+		if err = loadAll(client); err != nil {
+			return err
+		}
+	} else {
+		if err = loadByNames(client, names); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func loadByNames(client *consul.Client, names []string) error {
+	for i := range names {
+		names[i] = path.Join(consul.Redis, names[i])
+	}
+
+	return loadConfig(client, names)
 }
 
 func loadAll(client *consul.Client) error {

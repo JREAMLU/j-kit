@@ -1,4 +1,4 @@
-InstanceName = "BGCrawler"
+InstanceName = "BGCrawler" #InstanceName is base key
 DBName = "Crawler"
 
 [readwrite]

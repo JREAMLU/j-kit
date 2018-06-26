@@ -16,5 +16,10 @@ func TestLoadConfig(t *testing.T) {
 			err := Load(consulAddr, false)
 			So(err, ShouldBeNil)
 		})
+
+		Convey("load by names", func() {
+			err := Load(consulAddr, false, "CrawlerCluster")
+			So(err, ShouldBeNil)
+		})
 	})
 }

@@ -1,4 +1,4 @@
-InstanceName = "CrawlerCluster"
+InstanceName = "CrawlerCluster" #InstanceName is base key
 PoolSize = 10
 IsCluster = true
 
