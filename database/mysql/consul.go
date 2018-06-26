@@ -81,9 +81,10 @@ func watching(consulAddr string, names ...string) {
 				log.Printf("changed: %v \r\n", node)
 				ngx, err := LoadConfig(consulAddr, false, node)
 				if err != nil {
-					log.Printf("Failed on mysql LoadConfig, changedNode: %v, err: %v \r\n", node, err)
+					log.Printf("Failed on mysql LoadConfig, watchedNode: %v, err: %v \r\n", node, err)
 					continue
 				}
+
 				gx = ngx
 			}
 		}

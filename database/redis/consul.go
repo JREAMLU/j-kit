@@ -2,10 +2,12 @@ package redis
 
 import (
 	"fmt"
+	"log"
 	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/JREAMLU/j-core/consul"
+	"github.com/hashicorp/consul/api"
 )
 
 // MasterSlave master slave
@@ -37,10 +39,34 @@ func (masterSlave MasterSlave) String() string {
 
 // Watch watch config
 func Watch(consulAddr string, reloadConfig chan string, names ...string) {
-
+	for i := range names {
+		go func(name string) {
+			consul.WatchKey(consulAddr, path.Join(consul.Redis, name), func(kvPair *api.KVPair) {
+				reloadConfig <- name
+			})
+		}(names[i])
+	}
 }
 
 func watching(consulAddr string, names ...string) {
+	watchdNode := make(chan string)
+	Watch(consulAddr, watchdNode, names...)
+	go func() {
+		for {
+			select {
+			case node := <-watchdNode:
+				log.Printf("changed: %v \r\n", node)
+				if err := LoadConfig(consulAddr, false, node); err != nil {
+					log.Printf("Failed on redis LoadConfig, watchedNode: %v, err: %v \r\n", node, err)
+					continue
+				}
+
+				if group, ok := settings[node]; ok {
+					group.RefreshSetting = true
+				}
+			}
+		}
+	}()
 }
 
 // Load load redis
