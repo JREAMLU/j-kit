@@ -14,26 +14,18 @@ type MasterSlave bool
 // Configs redis configs in consul
 type Configs struct {
 	InstanceName string
-	Master       []master
-	Slave        []slave
+	PoolSize     int64
+	IsCluster    bool
+	Master       []msConn
+	Slave        []msConn
 }
 
-type master struct {
-	DB        string
-	IP        string
-	Port      string
-	PoolSize  int64
-	IsCluster bool
-	IsMaster  bool
-}
-
-type slave struct {
-	DB        string
-	IP        string
-	Port      string
-	PoolSize  int64
-	IsCluster bool
-	IsMaster  bool
+// msConn master & slave conn
+type msConn struct {
+	DB       string
+	IP       string
+	Port     string
+	IsMaster bool
 }
 
 func (masterSlave MasterSlave) String() string {
@@ -100,7 +92,58 @@ func loadNode(client *consul.Client, isMaster MasterSlave, val, instanceName str
 	if _, err := toml.Decode(val, &configs); err != nil {
 		return err
 	}
-	fmt.Println("++++++++++++: ", configs)
 
+	_redisSettings := make(map[string]*Group, len(settings))
+	for k, v := range settings {
+		_redisSettings[k] = v
+	}
+
+	group, ok := _redisSettings[instanceName]
+	if !ok {
+		group = &Group{
+			Name:       instanceName,
+			PoolSize:   configs.PoolSize,
+			RedisConns: make([]Conn, 0),
+			IsCluster:  configs.IsCluster,
+		}
+
+		_redisSettings[instanceName] = group
+	} else {
+		if group.RefreshSetting {
+			group = &Group{
+				Name:        instanceName,
+				PoolSize:    configs.PoolSize,
+				RedisConns:  make([]Conn, 0),
+				IsCluster:   configs.IsCluster,
+				RefreshPool: true,
+			}
+
+			_redisSettings[instanceName] = group
+		}
+	}
+
+	if len(configs.Master) > 0 {
+		for _, master := range configs.Master {
+			master.IsMaster = true
+			group.RedisConns = append(group.RedisConns, configToConn(master))
+		}
+	}
+
+	if len(configs.Slave) > 0 {
+		for _, slave := range configs.Master {
+			slave.IsMaster = false
+			group.RedisConns = append(group.RedisConns, configToConn(slave))
+		}
+	}
+
+	settings = _redisSettings
 	return nil
+}
+
+func configToConn(conf msConn) Conn {
+	return Conn{
+		DB:       conf.DB,
+		IsMaster: conf.IsMaster,
+		ConnStr:  fmt.Sprintf("%s:%v", conf.IP, conf.Port),
+	}
 }

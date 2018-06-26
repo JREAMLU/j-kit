@@ -3,7 +3,7 @@ package redis
 // Group redis group
 type Group struct {
 	Name           string
-	PoolSize       int
+	PoolSize       int64
 	RedisConns     []Conn
 	IsCluster      bool
 	RefreshSetting bool
@@ -16,3 +16,5 @@ type Conn struct {
 	DB       string
 	IsMaster bool
 }
+
+var settings map[string]*Group

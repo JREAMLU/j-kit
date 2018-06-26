@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -15,7 +14,7 @@ func TestLoadConfig(t *testing.T) {
 	Convey("load redis test", t, func() {
 		Convey("load all", func() {
 			err := Load(consulAddr, false)
-			fmt.Println("++++++++++++: 1", err)
+			So(err, ShouldBeNil)
 		})
 	})
 }
