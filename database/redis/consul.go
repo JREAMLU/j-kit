@@ -35,6 +35,14 @@ func (masterSlave MasterSlave) String() string {
 	return "slave"
 }
 
+// Watch watch config
+func Watch(consulAddr string, reloadConfig chan string, names ...string) {
+
+}
+
+func watching(consulAddr string, names ...string) {
+}
+
 // Load load redis
 func Load(consulAddr string, isWatching bool, names ...string) error {
 	return LoadConfig(consulAddr, isWatching, names...)

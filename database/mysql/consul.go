@@ -60,12 +60,12 @@ type readonly struct {
 
 var gx map[string]*gorm.DB
 
-// Watch watch
-func Watch(consulAddr string, needReloadConfig chan string, names ...string) {
+// Watch watch config
+func Watch(consulAddr string, reloadConfig chan string, names ...string) {
 	for i := range names {
 		go func(name string) {
 			consul.WatchKey(consulAddr, path.Join(consul.MYSQL, name), func(kvPair *api.KVPair) {
-				needReloadConfig <- name
+				reloadConfig <- name
 			})
 		}(names[i])
 	}
