@@ -91,6 +91,15 @@ func LoadConfig(consulAddr string, isWatching bool, names ...string) error {
 		}
 	}
 
+	if isWatching {
+		var nodes []string
+		for node := range settings {
+			nodes = append(nodes, node)
+		}
+
+		watching(consulAddr, nodes...)
+	}
+
 	return nil
 }
 
