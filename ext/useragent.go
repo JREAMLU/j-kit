@@ -1,6 +1,6 @@
 package ext
 
-import "github.com/JREAMLU/j-core/useragent"
+import "github.com/JREAMLU/j-kit/useragent"
 
 // UA ua
 type UA struct {

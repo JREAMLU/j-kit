@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/BurntSushi/toml"
-	"github.com/JREAMLU/j-core/consul"
+	"github.com/JREAMLU/j-kit/consul"
 	"github.com/hashicorp/consul/api"
 )
 

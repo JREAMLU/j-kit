@@ -1,1 +1,1 @@
-# j-core
+# j-kit

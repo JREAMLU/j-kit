@@ -3,7 +3,7 @@ package mysql
 import (
 	"testing"
 
-	"github.com/JREAMLU/j-core/constant"
+	"github.com/JREAMLU/j-kit/constant"
 	"github.com/jinzhu/gorm"
 	. "github.com/smartystreets/goconvey/convey"
 )

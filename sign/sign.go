@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JREAMLU/j-core/constant"
-	"github.com/JREAMLU/j-core/crypto"
-	"github.com/JREAMLU/j-core/ext"
+	"github.com/JREAMLU/j-kit/constant"
+	"github.com/JREAMLU/j-kit/crypto"
+	"github.com/JREAMLU/j-kit/ext"
 )
 
-//GenerateSign 生成签名 参数key全部按键值排序     ToUpper(md5(sha1(base64(urlencode(SecretKey1Value1Key2Value2SecretTime)))))
+//GenerateSign generate sign secret kvkvkv secret time ToUpper(md5(sha1(base64(urlencode(SecretKey1Value1Key2Value2SecretTime)))))
 //strtoupper( md5 ( sha1( base64_encode( urlencode( secret_key . static::serialize( request_data ) . secret_key . request_time ) ) ) ) )
 func GenerateSign(requestData []byte, requestTime int64, secret string) (string, error) {
 	var rdata map[string]interface{}
@@ -42,7 +42,7 @@ func GenerateSign(requestData []byte, requestTime int64, secret string) (string,
 	return strings.ToUpper(sign), nil
 }
 
-// Serialize 序列化 && 递归ksort
+// Serialize serialize && recursive ksort
 func serialize(data interface{}) interface{} {
 	var buffer bytes.Buffer
 	switch reflect.TypeOf(data).Kind() {
@@ -80,7 +80,7 @@ func serialize(data interface{}) interface{} {
 	return data
 }
 
-// ValidSign 签名验证
+// ValidSign valid sign
 func ValidSign(requestData []byte, sign string, timestamp int64, secret string, expire int64) error {
 	var rdata map[string]interface{}
 	json.Unmarshal(requestData, &rdata)

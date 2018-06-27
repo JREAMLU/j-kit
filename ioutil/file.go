@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/JREAMLU/j-core/constant"
+	"github.com/JREAMLU/j-kit/constant"
 )
 
 // ReadAll read all

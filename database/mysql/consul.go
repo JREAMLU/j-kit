@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"github.com/JREAMLU/j-core/consul"
-	"github.com/JREAMLU/j-core/ext"
+	"github.com/JREAMLU/j-kit/consul"
+	"github.com/JREAMLU/j-kit/ext"
 	"github.com/hashicorp/consul/api"
 	"github.com/jinzhu/gorm"
 	// mysql driver
