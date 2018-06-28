@@ -82,11 +82,41 @@ func (s *Structure) isCluster() bool {
 	return isCluster(s.InstanceName)
 }
 
-// @TODO getClientConn
 func (s *Structure) getClientConn(isMaster bool) redis.Conn {
-	return nil
+	// refresh true, set pool = nil, then get new pool
+	if isRefreshPool(s.InstanceName) {
+		s.lock.Lock()
+		s.writePool = nil
+		s.readPool = nil
+		disableRefreshPool(s.InstanceName)
+		s.lock.Unlock()
+	}
+
+	if s.writePool == nil {
+		s.writePool = s.getPool(s.InstanceName, true)
+		s.readPool = s.getPool(s.InstanceName, false)
+	}
+
+	if isMaster {
+		if s.writePool == nil {
+			return nil
+		}
+
+		return s.writePool.Get()
+	}
+
+	if s.readPool == nil {
+		return nil
+	}
+
+	return s.readPool.Get()
 }
 
 func (s *Structure) getClusterConn() redis.Conn {
+	return nil
+}
+
+// @TODO getPool
+func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
 	return nil
 }
