@@ -29,3 +29,19 @@ var settings map[string]*Group
 func configNotExists(instanceName string, isMaster bool) error {
 	return fmt.Errorf(ConfigNotExists, instanceName, isMaster)
 }
+
+func isCluster(instanceName string) bool {
+	if group, ok := settings[instanceName]; ok {
+		return group.IsCluster
+	}
+
+	return false
+}
+
+func isRefreshPool(instanceName string) bool {
+	if group, ok := settings[instanceName]; ok {
+		return group.RefreshPool
+	}
+
+	return false
+}

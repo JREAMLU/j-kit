@@ -70,7 +70,23 @@ func (s *Structure) String(isMaster bool, cmd string, params ...interface{}) (re
 	return
 }
 
-// @TODO getConn
 func (s *Structure) getConn(isMaster bool) redis.Conn {
+	if s.isCluster() {
+		return s.getClusterConn()
+	}
+
+	return s.getClientConn(isMaster)
+}
+
+func (s *Structure) isCluster() bool {
+	return isCluster(s.InstanceName)
+}
+
+// @TODO getClientConn
+func (s *Structure) getClientConn(isMaster bool) redis.Conn {
+	return nil
+}
+
+func (s *Structure) getClusterConn() redis.Conn {
 	return nil
 }
