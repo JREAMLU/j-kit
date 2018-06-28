@@ -11,3 +11,8 @@ func StringSplice(content ...string) string {
 
 	return str.String()
 }
+
+// StringEq string eq empty
+func StringEq(s string) bool {
+	return s == ""
+}

@@ -1,5 +1,7 @@
 package redis
 
+import "fmt"
+
 // Group redis group
 type Group struct {
 	Name           string
@@ -17,4 +19,13 @@ type Conn struct {
 	IsMaster bool
 }
 
+const (
+	// ConfigNotExists redis config no exists
+	ConfigNotExists = `redis config not exists,server=%s,master=%v`
+)
+
 var settings map[string]*Group
+
+func configNotExists(instanceName string, isMaster bool) error {
+	return fmt.Errorf(ConfigNotExists, instanceName, isMaster)
+}
