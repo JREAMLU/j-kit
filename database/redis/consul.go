@@ -187,7 +187,7 @@ func loadNode(client *consul.Client, isMaster MasterSlave, val, instanceName str
 	}
 
 	if len(configs.Slave) > 0 {
-		for _, slave := range configs.Master {
+		for _, slave := range configs.Slave {
 			slave.IsMaster = false
 			group.RedisConns = append(group.RedisConns, configToConn(slave))
 		}
