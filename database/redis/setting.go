@@ -1,6 +1,10 @@
 package redis
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 // Group redis group
 type Group struct {
@@ -50,4 +54,30 @@ func toggleRefreshPool(instanceName string, toggle bool) {
 	if group, ok := settings[instanceName]; ok {
 		group.RefreshPool = toggle
 	}
+}
+
+func getConn(instanceName string, isMaster bool) *Conn {
+	var pool []int
+	if group, ok := settings[instanceName]; ok {
+		for key := range group.RedisConns {
+			if group.RedisConns[key].IsMaster == isMaster {
+				pool = append(pool, key)
+			}
+		}
+
+		if len(pool) == 0 {
+			return nil
+		}
+
+		LB := poolBalance(len(pool))
+		hited := pool[LB]
+		return &group.RedisConns[hited]
+	}
+
+	return nil
+}
+
+func poolBalance(num int) int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(num)
 }

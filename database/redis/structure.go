@@ -118,5 +118,6 @@ func (s *Structure) getClusterConn() redis.Conn {
 
 // @TODO getPool
 func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
+	getConn(instanceName, isMaster)
 	return nil
 }
