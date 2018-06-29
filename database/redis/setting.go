@@ -46,8 +46,8 @@ func isRefreshPool(instanceName string) bool {
 	return false
 }
 
-func disableRefreshPool(instanceName string) {
+func toggleRefreshPool(instanceName string, toggle bool) {
 	if group, ok := settings[instanceName]; ok {
-		group.RefreshPool = false
+		group.RefreshPool = toggle
 	}
 }

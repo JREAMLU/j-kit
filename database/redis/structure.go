@@ -88,7 +88,7 @@ func (s *Structure) getClientConn(isMaster bool) redis.Conn {
 		s.lock.Lock()
 		s.writePool = nil
 		s.readPool = nil
-		disableRefreshPool(s.InstanceName)
+		toggleRefreshPool(s.InstanceName, false)
 		s.lock.Unlock()
 	}
 
