@@ -25,7 +25,7 @@ type Structure struct {
 	writePool    *redis.Pool
 	writeConn    string
 	readConn     string
-	lock         sync.Mutex
+	mutex        sync.Mutex
 	MaxIdle      int
 	IdleTimeout  time.Duration
 }
@@ -85,11 +85,11 @@ func (s *Structure) isCluster() bool {
 func (s *Structure) getClientConn(isMaster bool) redis.Conn {
 	// refresh true, set pool = nil, then get new pool
 	if isRefreshPool(s.InstanceName) {
-		s.lock.Lock()
+		s.mutex.Lock()
 		s.writePool = nil
 		s.readPool = nil
 		toggleRefreshPool(s.InstanceName, false)
-		s.lock.Unlock()
+		s.mutex.Unlock()
 	}
 
 	if s.writePool == nil {
@@ -116,8 +116,11 @@ func (s *Structure) getClusterConn() redis.Conn {
 	return nil
 }
 
-// @TODO getPool
 func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
-	getConn(instanceName, isMaster)
-	return nil
+	conn := getConn(instanceName, isMaster)
+	if conn == nil {
+		return nil
+	}
+
+	return GetPool(conn.ConnStr, conn.DB, s.MaxIdle, s.IdleTimeout)
 }

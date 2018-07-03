@@ -69,7 +69,7 @@ func getConn(instanceName string, isMaster bool) *Conn {
 			return nil
 		}
 
-		LB := poolBalance(len(pool))
+		LB := loadBalance(len(pool))
 		hited := pool[LB]
 		return &group.RedisConns[hited]
 	}
@@ -77,7 +77,7 @@ func getConn(instanceName string, isMaster bool) *Conn {
 	return nil
 }
 
-func poolBalance(num int) int {
+func loadBalance(num int) int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(num)
 }

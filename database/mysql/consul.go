@@ -32,7 +32,7 @@ const (
 	MaxIdleConns = 60
 )
 
-var lock sync.Mutex
+var mutex sync.Mutex
 
 // Config mysql config in consul
 type Config struct {
@@ -186,9 +186,9 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		// set pool
 		rwdb.DB().SetMaxOpenConns(MaxOpenConns)
 		rwdb.DB().SetMaxIdleConns(MaxIdleConns)
-		lock.Lock()
+		mutex.Lock()
 		dbs[instanceName] = rwdb
-		lock.Unlock()
+		mutex.Unlock()
 
 		// readonly
 		rdb, err := registerDatabase(instanceName, config, false)
@@ -197,9 +197,9 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		}
 		rdb.DB().SetMaxOpenConns(MaxOpenConns)
 		rdb.DB().SetMaxIdleConns(MaxIdleConns)
-		lock.Lock()
+		mutex.Lock()
 		dbs[GetReadOnly(instanceName)] = rdb
-		lock.Unlock()
+		mutex.Unlock()
 	}
 
 	return dbs, nil
