@@ -112,6 +112,7 @@ func (s *Structure) getClientConn(isMaster bool) redis.Conn {
 	return s.readPool.Get()
 }
 
+// @TODO getClusterConn
 func (s *Structure) getClusterConn() redis.Conn {
 	return nil
 }
