@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"net"
 	"sync"
 	"time"
 
@@ -17,6 +18,10 @@ type Pool struct {
 	MaxIdle     int
 	IdleTimeout time.Duration
 	rwMutex     sync.RWMutex
+}
+
+func init() {
+	pools = make(map[string]*Pool)
 }
 
 func newPool(addr string, maxIdle int, idleTimeout time.Duration) *Pool {
@@ -46,9 +51,51 @@ func (p *Pool) Get(db string) (rPool *redis.Pool) {
 	return p.register(db)
 }
 
-// @TODO register pool
 func (p *Pool) register(db string) (rPool *redis.Pool) {
-	return nil
+	var ok bool
+	p.rwMutex.Lock()
+	if rPool, ok = p.pools[db]; !ok {
+		rPool = &redis.Pool{
+			MaxIdle:     p.MaxIdle,
+			MaxActive:   p.MaxIdle,
+			IdleTimeout: p.IdleTimeout,
+			Wait:        true,
+			Dial: func() (redis.Conn, error) {
+				tcpAddr, err := net.ResolveTCPAddr("tcp", p.addr)
+				if err != nil {
+					return nil, err
+				}
+				tc, err := net.DialTCP("tcp", nil, tcpAddr)
+				if err != nil {
+					return nil, err
+				}
+				if err = tc.SetKeepAlive(true); err != nil {
+					return nil, err
+				}
+				if err = tc.SetKeepAlivePeriod(2 * time.Hour); err != nil {
+					return nil, err
+				}
+
+				conn := redis.NewConn(tc, ReadTimeout, WriteTimeout)
+				_, err = conn.Do("SELECT", db)
+				if err != nil {
+					return nil, err
+				}
+
+				return conn, nil
+			},
+			TestOnBorrow: func(c redis.Conn, t time.Time) error {
+				if time.Since(t) < time.Minute {
+					return nil
+				}
+				_, err := c.Do("PING")
+				return err
+			},
+		}
+	}
+	p.rwMutex.Unlock()
+
+	return rPool
 }
 
 // GetPool get redis pool Ingress

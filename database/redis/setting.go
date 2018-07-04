@@ -30,8 +30,32 @@ const (
 
 var settings map[string]*Group
 
+var (
+	// ConnectTimeout default redis Connect Timeout
+	ConnectTimeout = 3 * time.Second
+	// ReadTimeout default redis
+	ReadTimeout = 1 * time.Second
+	// WriteTimeout default redis
+	WriteTimeout = 1 * time.Second
+)
+
 func configNotExists(instanceName string, isMaster bool) error {
 	return fmt.Errorf(ConfigNotExists, instanceName, isMaster)
+}
+
+// SetConnectTimeout Set Connect Timeout
+func SetConnectTimeout(t time.Duration) {
+	ConnectTimeout = t
+}
+
+// SetReadTimeout Set Read Timeout
+func SetReadTimeout(t time.Duration) {
+	ReadTimeout = t
+}
+
+// SetWriteTimeout Set Write Timeout
+func SetWriteTimeout(t time.Duration) {
+	WriteTimeout = t
 }
 
 func isCluster(instanceName string) bool {
