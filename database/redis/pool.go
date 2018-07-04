@@ -61,22 +61,22 @@ func (p *Pool) register(db string) (rPool *redis.Pool) {
 			IdleTimeout: p.IdleTimeout,
 			Wait:        true,
 			Dial: func() (redis.Conn, error) {
-				tcpAddr, err := net.ResolveTCPAddr("tcp", p.addr)
+				addr, err := net.ResolveTCPAddr("tcp", p.addr)
 				if err != nil {
 					return nil, err
 				}
-				tc, err := net.DialTCP("tcp", nil, tcpAddr)
+				tcpConn, err := net.DialTCP("tcp", nil, addr)
 				if err != nil {
 					return nil, err
 				}
-				if err = tc.SetKeepAlive(true); err != nil {
+				if err = tcpConn.SetKeepAlive(true); err != nil {
 					return nil, err
 				}
-				if err = tc.SetKeepAlivePeriod(2 * time.Hour); err != nil {
+				if err = tcpConn.SetKeepAlivePeriod(KeepAlivePeriod); err != nil {
 					return nil, err
 				}
 
-				conn := redis.NewConn(tc, ReadTimeout, WriteTimeout)
+				conn := redis.NewConn(tcpConn, ReadTimeout, WriteTimeout)
 				_, err = conn.Do("SELECT", db)
 				if err != nil {
 					return nil, err

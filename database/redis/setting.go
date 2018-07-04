@@ -37,6 +37,8 @@ var (
 	ReadTimeout = 1 * time.Second
 	// WriteTimeout default redis
 	WriteTimeout = 1 * time.Second
+	// KeepAlivePeriod default keep alive period
+	KeepAlivePeriod = 2 * time.Hour
 )
 
 func configNotExists(instanceName string, isMaster bool) error {
@@ -46,6 +48,11 @@ func configNotExists(instanceName string, isMaster bool) error {
 // SetConnectTimeout Set Connect Timeout
 func SetConnectTimeout(t time.Duration) {
 	ConnectTimeout = t
+}
+
+// SetKeepAlivePeriod Set Keep Alive Period
+func SetKeepAlivePeriod(t time.Duration) {
+	KeepAlivePeriod = t
 }
 
 // SetReadTimeout Set Read Timeout
