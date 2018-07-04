@@ -61,14 +61,21 @@ func (p *Pool) register(db string) (rPool *redis.Pool) {
 			IdleTimeout: p.IdleTimeout,
 			Wait:        true,
 			Dial: func() (redis.Conn, error) {
-				addr, err := net.ResolveTCPAddr("tcp", p.addr)
+				/*
+					addr, err := net.ResolveTCPAddr("tcp", p.addr)
+					if err != nil {
+						return nil, err
+					}
+					tcpConn, err := net.DialTCP("tcp", nil, addr)
+				*/
+				d := net.Dialer{
+					Timeout: ConnectTimeout,
+				}
+				dialConn, err := d.Dial("tcp", p.addr)
 				if err != nil {
 					return nil, err
 				}
-				tcpConn, err := net.DialTCP("tcp", nil, addr)
-				if err != nil {
-					return nil, err
-				}
+				tcpConn := dialConn.(*net.TCPConn)
 				if err = tcpConn.SetKeepAlive(true); err != nil {
 					return nil, err
 				}
