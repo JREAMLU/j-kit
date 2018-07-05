@@ -7,17 +7,28 @@ import (
 )
 
 const (
-	consulAddrHash   = "10.200.202.35:8500"
-	hashServer       = "Crawler"
-	hashKeyPrefixFmt = "%v"
-	hashKey          = "thash"
+	consulAddrHash    = "10.200.202.35:8500"
+	hashServer        = "Crawler"
+	hashServerCluster = "CrawlerCluster"
+	hashKeyPrefixFmt  = "%v"
+	hashKey           = "thash"
 )
 
 func TestGet(t *testing.T) {
-	Convey("get test", t, func() {
-		Load(consulAddrHash, false, hashServer)
+	// Convey("get test", t, func() {
+	// 	Load(consulAddrHash, false, hashServer)
+	//
+	// 	h := NewHash(hashServer, hashKeyPrefixFmt)
+	// 	reply, err := h.Get(hashKey, "name")
+	// 	So(err, ShouldBeNil)
+	// 	So(reply, ShouldNotBeBlank)
+	// 	t.Log(reply, err)
+	// })
 
-		h := NewHash(hashServer, hashKeyPrefixFmt)
+	Convey("get cluster test", t, func() {
+		Load(consulAddrHash, false, hashServerCluster)
+
+		h := NewHash(hashServerCluster, hashKeyPrefixFmt)
 		reply, err := h.Get(hashKey, "name")
 		So(err, ShouldBeNil)
 		So(reply, ShouldNotBeBlank)

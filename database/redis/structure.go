@@ -7,6 +7,7 @@ import (
 
 	"github.com/JREAMLU/j-kit/ext"
 	"github.com/gomodule/redigo/redis"
+	"github.com/mna/redisc"
 )
 
 const (
@@ -23,6 +24,7 @@ type Structure struct {
 	InstanceName string
 	readPool     *redis.Pool
 	writePool    *redis.Pool
+	clusterPool  *redisc.Cluster
 	writeConn    string
 	readConn     string
 	mutex        sync.Mutex
@@ -112,9 +114,29 @@ func (s *Structure) getClientConn(isMaster bool) redis.Conn {
 	return s.readPool.Get()
 }
 
-// @TODO getClusterConn
 func (s *Structure) getClusterConn() redis.Conn {
-	return nil
+	// refresh true, set pool = nil, then get new pool
+	if isRefreshPool(s.InstanceName) {
+		s.mutex.Lock()
+		if s.clusterPool != nil {
+			s.clusterPool.Close()
+			delete(clusterPool, s.InstanceName)
+			s.clusterPool = nil
+		}
+		toggleRefreshPool(s.InstanceName, false)
+		s.mutex.Unlock()
+	}
+
+	if s.clusterPool == nil {
+		s.clusterPool = s.getClusterPool(s.InstanceName)
+	}
+
+	retryConn, err := redisc.RetryConn(s.clusterPool.Get(), _defaultClusterRetryTime, _defaultClusterRetryDelay)
+	if err != nil {
+		return nil
+	}
+
+	return retryConn
 }
 
 func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
@@ -124,4 +146,8 @@ func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
 	}
 
 	return GetPool(conn.ConnStr, conn.DB, s.MaxIdle, s.IdleTimeout)
+}
+
+func (s *Structure) getClusterPool(instanceName string) *redisc.Cluster {
+	return getClusterPool(instanceName, s.MaxIdle, s.IdleTimeout)
 }
