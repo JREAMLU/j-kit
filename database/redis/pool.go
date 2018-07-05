@@ -95,6 +95,7 @@ func (p *Pool) register(db string) (rPool *redis.Pool) {
 				if time.Since(t) < time.Minute {
 					return nil
 				}
+
 				_, err := c.Do("PING")
 				return err
 			},
