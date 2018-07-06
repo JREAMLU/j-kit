@@ -87,6 +87,19 @@ func toggleRefreshPool(instanceName string, toggle bool) {
 	}
 }
 
+func getClusterNodes(instanceName string) []string {
+	if _, ok := settings[instanceName]; !ok {
+		return nil
+	}
+
+	nodes := make([]string, len(settings[instanceName].RedisConns))
+	for k, v := range settings[instanceName].RedisConns {
+		nodes[k] = v.ConnStr
+	}
+
+	return nodes
+}
+
 func getConn(instanceName string, isMaster bool) *Conn {
 	var pool []int
 	if group, ok := settings[instanceName]; ok {

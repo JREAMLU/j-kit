@@ -120,7 +120,7 @@ func (s *Structure) getClusterConn() redis.Conn {
 		s.mutex.Lock()
 		if s.clusterPool != nil {
 			s.clusterPool.Close()
-			delete(clusterPool, s.InstanceName)
+			delete(poolcs, s.InstanceName)
 			s.clusterPool = nil
 		}
 		toggleRefreshPool(s.InstanceName, false)
@@ -128,7 +128,9 @@ func (s *Structure) getClusterConn() redis.Conn {
 	}
 
 	if s.clusterPool == nil {
-		s.clusterPool = s.getClusterPool(s.InstanceName)
+		if s.clusterPool = s.getClusterPool(s.InstanceName); s.clusterPool == nil {
+			return nil
+		}
 	}
 
 	retryConn, err := redisc.RetryConn(s.clusterPool.Get(), _defaultClusterRetryTime, _defaultClusterRetryDelay)
@@ -149,5 +151,5 @@ func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
 }
 
 func (s *Structure) getClusterPool(instanceName string) *redisc.Cluster {
-	return getClusterPool(instanceName, s.MaxIdle, s.IdleTimeout)
+	return getPoolc(instanceName, s.MaxIdle, s.IdleTimeout)
 }
