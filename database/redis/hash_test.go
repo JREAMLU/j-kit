@@ -25,13 +25,25 @@ func TestGet(t *testing.T) {
 	// 	t.Log(reply, err)
 	// })
 
-	Convey("get cluster test", t, func() {
-		Load(consulAddrHash, false, hashServerCluster)
+	// Convey("get cluster test", t, func() {
+	// 	Load(consulAddrHash, false, hashServerCluster)
+	//
+	// 	h := NewHash(hashServerCluster, hashKeyPrefixFmt)
+	// 	reply, err := h.Get(hashKey, "name")
+	// 	So(err, ShouldBeNil)
+	// 	So(reply, ShouldNotBeBlank)
+	// 	t.Log(reply, err)
+	// })
 
-		h := NewHash(hashServerCluster, hashKeyPrefixFmt)
-		reply, err := h.Get(hashKey, "name")
+	Convey("gets test", t, func() {
+		Load(consulAddrHash, false, hashServer)
+
+		h := NewHash(hashServer, hashKeyPrefixFmt)
+		// var fields []string{"name","age"}
+		fields := []string{"name", "age"}
+		reply, err := h.Gets(hashKey, fields)
 		So(err, ShouldBeNil)
-		So(reply, ShouldNotBeBlank)
+		So(len(reply), ShouldBeGreaterThan, 0)
 		t.Log(reply, err)
 	})
 }

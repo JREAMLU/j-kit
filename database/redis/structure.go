@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/JREAMLU/j-kit/constant"
 	"github.com/JREAMLU/j-kit/ext"
 	"github.com/gomodule/redigo/redis"
 	"github.com/mna/redisc"
@@ -16,6 +17,10 @@ const (
 	_defaultIdletimeout       = 240 * time.Second
 	_defaultClusterRetryTime  = 3
 	_defaultClusterRetryDelay = 100 * time.Millisecond
+	// MASTER read & write
+	MASTER = true
+	// SLAVE read
+	SLAVE = false
 )
 
 // Structure redis structure
@@ -61,14 +66,56 @@ func (s *Structure) InitKey(keySuffix string) string {
 	return fmt.Sprintf(s.KeyPrefixFmt, keySuffix)
 }
 
+// Bool bool base operation
+func (s *Structure) Bool(isMaster bool, cmd string, params ...interface{}) (reply bool, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return false, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Bool(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
+// String string base operation
 func (s *Structure) String(isMaster bool, cmd string, params ...interface{}) (reply string, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
 		return "", configNotExists(s.InstanceName, isMaster)
 	}
-	defer conn.Close()
 
-	return redis.String(conn.Do(cmd, params...))
+	reply, err = redis.String(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
+// Strings strings base operation
+func (s *Structure) Strings(isMaster bool, cmd string, params ...interface{}) (reply []string, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Strings(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
+// Int int base operation
+func (s *Structure) Int(isMaster bool, cmd string, params ...interface{}) (reply int, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return constant.ZeroInt, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Int(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
 }
 
 func (s *Structure) getConn(isMaster bool) redis.Conn {
