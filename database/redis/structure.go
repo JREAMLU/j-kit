@@ -66,10 +66,9 @@ func (s *Structure) String(isMaster bool, cmd string, params ...interface{}) (re
 	if conn == nil {
 		return "", configNotExists(s.InstanceName, isMaster)
 	}
+	defer conn.Close()
 
-	reply, err = redis.String(conn.Do(cmd, params...))
-	conn.Close()
-	return
+	return redis.String(conn.Do(cmd, params...))
 }
 
 func (s *Structure) getConn(isMaster bool) redis.Conn {
