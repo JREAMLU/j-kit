@@ -1,5 +1,12 @@
 package redis
 
+import (
+	"log"
+
+	"github.com/JREAMLU/core/crypto"
+	redigo "github.com/gomodule/redigo/redis"
+)
+
 func cutSlice(cut int, src []interface{}) [][]interface{} {
 	l := make([][]interface{}, 0)
 	start := 0
@@ -142,4 +149,35 @@ func sliceChunkStr(slice []string, size int) (chunkslice [][]string) {
 	}
 
 	return chunkslice
+}
+
+// LuaBodySha1 lua script
+// First key is IP:PORT
+// Second key is string = sha1(luaBody)
+var LuaBodySha1 = make(map[string]map[string]*redigo.Script)
+
+// GetScript get lu script
+func GetScript(key, luaBody string) *redigo.Script {
+	var m map[string]*redigo.Script
+	var s *redigo.Script
+	var ok bool
+
+	if m, ok = LuaBodySha1[key]; !ok {
+		m = make(map[string]*redigo.Script)
+		LuaBodySha1[key] = m
+	}
+
+	sha, err := crypto.Sha1(luaBody)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	if s, ok = m[sha]; !ok {
+		s = redigo.NewScript(1, luaBody)
+		m[sha] = s
+		return s
+	}
+
+	return s
 }

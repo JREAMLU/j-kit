@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -131,6 +132,55 @@ func (s *Structure) Ints(isMaster bool, cmd string, params ...interface{}) (repl
 	return reply, err
 }
 
+// Int64 int64 base operation
+func (s *Structure) Int64(isMaster bool, cmd string, params ...interface{}) (reply int64, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return constant.ZeroInt64, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Int64(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
+// ScanAllMap scan all return map
+func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
+	cursor := 0
+	conn := s.getConn(SLAVE)
+	if conn == nil {
+		return nil, configNotExists(s.InstanceName, SLAVE)
+	}
+	defer conn.Close()
+	connStr := s.getConnstr(false)
+	if connStr == "" {
+		return nil, configNotExists(s.InstanceName, false)
+	}
+	script := GetScript(connStr, luaBody)
+	if script == nil {
+		return nil, configNotExists(s.InstanceName, false)
+	}
+	result := make(map[string]string)
+	for {
+		results, err := redis.Strings(script.Do(conn, 0, key, cursor, _defaultPagesize))
+		if err != nil {
+			return nil, err
+		}
+		for i := 1; i < len(results); i = i + 2 {
+			result[results[i]] = results[i+1]
+		}
+		cursor, err = strconv.Atoi(results[0])
+		if err != nil {
+			return nil, err
+		}
+		if cursor == 0 {
+			break
+		}
+	}
+	return result, nil
+}
+
 func (s *Structure) getConn(isMaster bool) redis.Conn {
 	if s.isCluster() {
 		return s.getClusterConn()
@@ -211,4 +261,31 @@ func (s *Structure) getPool(instanceName string, isMaster bool) *redis.Pool {
 
 func (s *Structure) getClusterPool(instanceName string) *redisc.Cluster {
 	return getPoolc(instanceName, s.MaxIdle, s.IdleTimeout)
+}
+
+func (s *Structure) getConnstr(isMaster bool) string {
+	if isMaster && s.writeConn != "" {
+		return s.writeConn
+	}
+
+	if !isMaster && s.readConn != "" {
+		return s.readConn
+	}
+
+	conn := getConn(s.InstanceName, isMaster)
+	if conn == nil {
+		conn = getConn(s.InstanceName, isMaster)
+	}
+
+	if conn == nil {
+		return constant.EmptyStr
+	}
+
+	if isMaster {
+		s.writeConn = conn.ConnStr
+	} else {
+		s.readConn = conn.ConnStr
+	}
+
+	return conn.ConnStr
 }
