@@ -118,6 +118,19 @@ func (s *Structure) Int(isMaster bool, cmd string, params ...interface{}) (reply
 	return reply, err
 }
 
+// Ints ints base operation
+func (s *Structure) Ints(isMaster bool, cmd string, params ...interface{}) (reply []int, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Ints(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
 func (s *Structure) getConn(isMaster bool) redis.Conn {
 	if s.isCluster() {
 		return s.getClusterConn()

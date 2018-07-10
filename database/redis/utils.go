@@ -46,10 +46,36 @@ func cutStringSlice(cut int, src []string) [][]interface{} {
 	return l
 }
 
+func cutStringSlice2(cut int, srcStr []string) [][]interface{} {
+	src := make([]interface{}, len(srcStr))
+	for key, val := range srcStr {
+		src[key] = val
+	}
+
+	l := make([][]interface{}, 0)
+	start := 0
+	offset := cut
+	for {
+		if start > len(src)-1 {
+			break
+		}
+		//offset += 1
+		if offset > len(src) {
+			offset = len(src)
+		}
+
+		temp := src[start:offset]
+		l = append(l, temp)
+		start = offset
+		offset += cut
+	}
+	return l
+}
+
 func sliceChunkString(sliceStr []string, size int) (chunkslice [][]interface{}) {
 	sliceStrLen := len(sliceStr)
 
-	size1 := len(sliceStr) / size
+	size1 := sliceStrLen / size
 	if size == 0 || sliceStrLen%size > 0 {
 		size1++
 	}
@@ -60,6 +86,29 @@ func sliceChunkString(sliceStr []string, size int) (chunkslice [][]interface{}) 
 	for key, val := range sliceStr {
 		slice[key] = val
 	}
+
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(slice) {
+			end = len(slice)
+		}
+
+		chunkslice = append(chunkslice, slice[i:end])
+	}
+
+	return chunkslice
+}
+
+func sliceChunk(slice []interface{}, size int) (chunkslice [][]interface{}) {
+	sliceLen := len(slice)
+
+	size1 := sliceLen / size
+	if size == 0 || sliceLen%size > 0 {
+		size1++
+	}
+
+	chunkSize := (sliceLen + size1 - 1) / size1
 
 	for i := 0; i < len(slice); i += chunkSize {
 		end := i + chunkSize

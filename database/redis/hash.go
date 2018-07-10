@@ -54,14 +54,14 @@ func (h *Hash) Gets(keySuffix string, fields []string) (map[string]string, error
 	result := make(map[string]string)
 	chunkFields := sliceChunkString(fields, _chunkHMGETFields)
 
-	for _, field := range chunkFields {
-		args := append([]interface{}{key}, field...)
+	for _, cFields := range chunkFields {
+		args := append([]interface{}{key}, cFields...)
 		reply, err := h.Strings(SLAVE, "HMGET", args...)
 		if err != nil {
 			return nil, err
 		}
 
-		for key := range field {
+		for key := range cFields {
 			if reply[key] != "" {
 				result[fields[key]] = reply[key]
 			}
@@ -69,4 +69,27 @@ func (h *Hash) Gets(keySuffix string, fields []string) (map[string]string, error
 	}
 
 	return result, nil
+}
+
+// GetInts hash get ints
+func (h *Hash) GetInts(keySuffix string, fields ...interface{}) ([]int, error) {
+	key := h.InitKey(keySuffix)
+	chunkFields := sliceChunk(fields, _chunkHMGETFields)
+	results := make([]int, 0)
+	for _, cFields := range chunkFields {
+		args := make([]interface{}, len(cFields)+1)
+		args[0] = key
+		for i := range cFields {
+			args[i+1] = cFields[i]
+		}
+
+		subResult, err := h.Ints(false, "HMGET", args...)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, subResult...)
+	}
+
+	return results, nil
 }
