@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/JREAMLU/j-kit/constant"
-	"github.com/garyburd/redigo/redis"
+	"github.com/gomodule/redigo/redis"
 )
 
 // Hash redis hash
@@ -29,6 +29,8 @@ const (
 	HMSET = "HMSET"
 	// OK ok
 	OK = "OK"
+	// HGETALL hgetall
+	HGETALL = "HGETALL"
 )
 
 // NewHash new hash
@@ -217,4 +219,20 @@ func (h *Hash) MSetSafe(keySuffix string, blockSize int, fields ...interface{}) 
 func (h *Hash) GetAllSafe(keySuffix string) (map[string]string, error) {
 	key := h.InitKey(keySuffix)
 	return h.ScanAllMap(key, HSCAN)
+}
+
+// GetAllScanStruct get all by struct
+func (h *Hash) GetAllScanStruct(keySuffix string, p interface{}) error {
+	key := h.InitKey(keySuffix)
+	vals, err := h.Values(SLAVE, HGETALL, key)
+	if err != nil {
+		return err
+	}
+
+	err = redis.ScanStruct(vals, p)
+	if err != nil {
+		return err
+	}
+
+	return err
 }

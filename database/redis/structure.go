@@ -181,6 +181,19 @@ func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
 	return result, nil
 }
 
+// Values values
+func (s *Structure) Values(isMaster bool, cmd string, params ...interface{}) (reply []interface{}, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Values(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
 func (s *Structure) getConn(isMaster bool) redis.Conn {
 	if s.isCluster() {
 		return s.getClusterConn()
