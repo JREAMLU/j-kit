@@ -121,16 +121,15 @@ func (g *Geo) Radius(keySuffix string, longitude, latitude, radius interface{}, 
 				if reply[i] == nil {
 					continue
 				}
-				p, ok := reply[i].([]byte)
-				if !ok {
 
+				if p, ok := reply[i].(string); ok {
+					result[i] = p
 				}
-				result[i] = string(p)
 			}
 
 			results = append(results, result)
 		default:
-			return nil, errors.New("wrong type")
+			return nil, errors.New("wrong type, not []interface{}")
 		}
 	}
 
