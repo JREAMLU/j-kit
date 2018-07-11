@@ -196,7 +196,7 @@ func (s *String) MSetNX(keySuffix []string, value []interface{}) (int, error) {
 
 func (s *String) getParams(keySuffix []string, value []interface{}) ([]interface{}, error) {
 	if len(keySuffix) != len(value) {
-		return nil, errors.New("key和value的数量不一致")
+		return nil, errors.New("params error: key, value len must be equal")
 	}
 
 	params := make([]interface{}, len(keySuffix)*2)

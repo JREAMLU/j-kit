@@ -164,6 +164,31 @@ func (s *Structure) Float64(isMaster bool, cmd string, params ...interface{}) (r
 	return reply, err
 }
 
+// Float64Slice float64slice
+func (s *Structure) Float64Slice(isMaster bool, cmd string, params ...interface{}) (reply [][]float64, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
+	}
+
+	items, err := redis.Values(conn.Do(cmd, params...))
+	if err != nil {
+		return nil, err
+	}
+
+	reply = make([][]float64, len(items))
+	var cErr error
+	for i, item := range items {
+		reply[i], err = redis.Float64s(item, err)
+		if err != nil {
+			cErr = err
+		}
+	}
+	conn.Close()
+
+	return reply, cErr
+}
+
 // ScanAllMap scan all return map
 func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
 	cursor := 0
