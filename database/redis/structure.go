@@ -189,6 +189,19 @@ func (s *Structure) Float64Slice(isMaster bool, cmd string, params ...interface{
 	return reply, cErr
 }
 
+// MultiBulk Multi Bulk
+func (s *Structure) MultiBulk(isMaster bool, cmd string, params ...interface{}) (reply []interface{}, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.MultiBulk(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
 // ScanAllMap scan all return map
 func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
 	cursor := 0
