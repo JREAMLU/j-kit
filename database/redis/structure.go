@@ -151,6 +151,19 @@ func (s *Structure) Int64(isMaster bool, cmd string, params ...interface{}) (rep
 	return reply, err
 }
 
+// Int64s int64s base operation
+func (s *Structure) Int64s(isMaster bool, cmd string, params ...interface{}) (reply []int64, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Int64s(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
 // Float64 float64 base operation
 func (s *Structure) Float64(isMaster bool, cmd string, params ...interface{}) (reply float64, err error) {
 	conn := s.getConn(isMaster)
