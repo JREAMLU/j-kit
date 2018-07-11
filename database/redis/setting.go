@@ -24,8 +24,8 @@ type Conn struct {
 }
 
 const (
-	// ConfigNotExists redis config no exists
-	ConfigNotExists = `redis config not exists,server=%s,master=%v`
+	// ConfigNotExistsOrLoad redis config no exists
+	ConfigNotExistsOrLoad = `redis config not exists OR not load config instance, server=%s,master=%v`
 )
 
 var settings map[string]*Group
@@ -41,8 +41,8 @@ var (
 	KeepAlivePeriod = 2 * time.Hour
 )
 
-func configNotExists(instanceName string, isMaster bool) error {
-	return fmt.Errorf(ConfigNotExists, instanceName, isMaster)
+func configNotExistsOrLoad(instanceName string, isMaster bool) error {
+	return fmt.Errorf(ConfigNotExistsOrLoad, instanceName, isMaster)
 }
 
 // SetConnectTimeout Set Connect Timeout

@@ -75,7 +75,7 @@ func (s *Structure) InitKey(keySuffix string) string {
 func (s *Structure) Bool(isMaster bool, cmd string, params ...interface{}) (reply bool, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return false, configNotExists(s.InstanceName, isMaster)
+		return false, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Bool(conn.Do(cmd, params...))
@@ -88,7 +88,7 @@ func (s *Structure) Bool(isMaster bool, cmd string, params ...interface{}) (repl
 func (s *Structure) String(isMaster bool, cmd string, params ...interface{}) (reply string, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return "", configNotExists(s.InstanceName, isMaster)
+		return "", configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.String(conn.Do(cmd, params...))
@@ -101,7 +101,7 @@ func (s *Structure) String(isMaster bool, cmd string, params ...interface{}) (re
 func (s *Structure) Strings(isMaster bool, cmd string, params ...interface{}) (reply []string, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return nil, configNotExists(s.InstanceName, isMaster)
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Strings(conn.Do(cmd, params...))
@@ -114,7 +114,7 @@ func (s *Structure) Strings(isMaster bool, cmd string, params ...interface{}) (r
 func (s *Structure) Int(isMaster bool, cmd string, params ...interface{}) (reply int, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return constant.ZeroInt, configNotExists(s.InstanceName, isMaster)
+		return constant.ZeroInt, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Int(conn.Do(cmd, params...))
@@ -127,7 +127,7 @@ func (s *Structure) Int(isMaster bool, cmd string, params ...interface{}) (reply
 func (s *Structure) Ints(isMaster bool, cmd string, params ...interface{}) (reply []int, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return nil, configNotExists(s.InstanceName, isMaster)
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Ints(conn.Do(cmd, params...))
@@ -140,7 +140,7 @@ func (s *Structure) Ints(isMaster bool, cmd string, params ...interface{}) (repl
 func (s *Structure) Int64(isMaster bool, cmd string, params ...interface{}) (reply int64, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return constant.ZeroInt64, configNotExists(s.InstanceName, isMaster)
+		return constant.ZeroInt64, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Int64(conn.Do(cmd, params...))
@@ -153,7 +153,7 @@ func (s *Structure) Int64(isMaster bool, cmd string, params ...interface{}) (rep
 func (s *Structure) Float64(isMaster bool, cmd string, params ...interface{}) (reply float64, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return constant.ZeroFLOAT64, configNotExists(s.InstanceName, isMaster)
+		return constant.ZeroFLOAT64, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Float64(conn.Do(cmd, params...))
@@ -167,18 +167,18 @@ func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
 	cursor := 0
 	conn := s.getConn(SLAVE)
 	if conn == nil {
-		return nil, configNotExists(s.InstanceName, SLAVE)
+		return nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	defer conn.Close()
 	connStr := s.getConnstr(SLAVE)
 	if connStr == "" {
-		return nil, configNotExists(s.InstanceName, SLAVE)
+		return nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	script := GetScript(connStr, luaBody)
 	if script == nil {
-		return nil, configNotExists(s.InstanceName, SLAVE)
+		return nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	result := make(map[string]string)
@@ -211,19 +211,19 @@ func (s *Structure) ScanAll(key, luaBody string) ([]string, error) {
 	cursor := 0
 	conn := s.getConn(SLAVE)
 	if conn == nil {
-		return nil, configNotExists(s.InstanceName, SLAVE)
+		return nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	defer conn.Close()
 	var result []string
 	connStr := s.getConnstr(SLAVE)
 	if connStr == "" {
-		return nil, configNotExists(s.InstanceName, SLAVE)
+		return nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	script := GetScript(connStr, luaBody)
 	if script == nil {
-		return nil, configNotExists(s.InstanceName, SLAVE)
+		return nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	for {
@@ -251,18 +251,18 @@ func (s *Structure) ScanAll(key, luaBody string) ([]string, error) {
 func (s *Structure) Scan(key, luaBody string, cursor, pageSize int) (int, []string, error) {
 	conn := s.getConn(SLAVE)
 	if conn == nil {
-		return constant.ZeroInt, nil, configNotExists(s.InstanceName, SLAVE)
+		return constant.ZeroInt, nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	defer conn.Close()
 	connStr := s.getConnstr(false)
 	if connStr == "" {
-		return constant.ZeroInt, nil, configNotExists(s.InstanceName, SLAVE)
+		return constant.ZeroInt, nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	script := GetScript(connStr, luaBody)
 	if script == nil {
-		return constant.ZeroInt, nil, configNotExists(s.InstanceName, SLAVE)
+		return constant.ZeroInt, nil, configNotExistsOrLoad(s.InstanceName, SLAVE)
 	}
 
 	//第一个0参数是KEYS参数个数
@@ -283,7 +283,7 @@ func (s *Structure) Scan(key, luaBody string, cursor, pageSize int) (int, []stri
 func (s *Structure) Values(isMaster bool, cmd string, params ...interface{}) (reply []interface{}, err error) {
 	conn := s.getConn(isMaster)
 	if conn == nil {
-		return nil, configNotExists(s.InstanceName, isMaster)
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
 	}
 
 	reply, err = redis.Values(conn.Do(cmd, params...))
