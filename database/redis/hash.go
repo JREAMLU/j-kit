@@ -17,9 +17,6 @@ const (
 	_chunkHMGETFields = 10000
 	_blockSize        = 500
 
-	// OK ok
-	OK = "OK"
-
 	// HDEL hdel
 	HDEL = "HDEL"
 	// HEXISTS hexists

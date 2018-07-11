@@ -26,6 +26,8 @@ const (
 	ON = true
 	// OFF refresh OFF
 	OFF = false
+	// OK ok
+	OK = "OK"
 )
 
 // Structure redis structure
