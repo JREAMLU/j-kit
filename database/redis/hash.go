@@ -81,8 +81,7 @@ func (h *Hash) Exists(keySuffix, field string) (bool, error) {
 
 // Get hash get
 func (h *Hash) Get(keySuffix, field string) (string, error) {
-	key := h.InitKey(keySuffix)
-	return h.String(SLAVE, HGET, key, field)
+	return h.String(SLAVE, HGET, h.InitKey(keySuffix), field)
 }
 
 // Gets hash gets map
@@ -98,9 +97,9 @@ func (h *Hash) Gets(keySuffix string, fields []string) (map[string]string, error
 			return nil, err
 		}
 
-		for key := range cFields {
-			if reply[key] != "" {
-				result[fields[key]] = reply[key]
+		for i := range cFields {
+			if reply[i] != "" {
+				result[fields[i]] = reply[i]
 			}
 		}
 	}
@@ -133,14 +132,12 @@ func (h *Hash) GetInts(keySuffix string, fields ...interface{}) ([]int, error) {
 
 // GetInt hash get int
 func (h *Hash) GetInt(keySuffix, field string) (int, error) {
-	key := h.InitKey(keySuffix)
-	return h.Int(SLAVE, HGET, key, field)
+	return h.Int(SLAVE, HGET, h.InitKey(keySuffix), field)
 }
 
 // GetInt64 hash get int64
 func (h *Hash) GetInt64(keySuffix, field string) (int64, error) {
-	key := h.InitKey(keySuffix)
-	return h.Int64(SLAVE, HGET, key, field)
+	return h.Int64(SLAVE, HGET, h.InitKey(keySuffix), field)
 }
 
 // GetInt64s hash get int64s
@@ -148,6 +145,7 @@ func (h *Hash) GetInt64s(keySuffix string, fields ...interface{}) ([]int64, erro
 	key := h.InitKey(keySuffix)
 	chunkFields := sliceChunk(fields, _chunkHMGETFields)
 	results := make([]int64, 0)
+
 	for _, cFields := range chunkFields {
 		args := make([]interface{}, len(cFields)+1)
 		args[0] = key
@@ -165,6 +163,7 @@ func (h *Hash) GetInt64s(keySuffix string, fields ...interface{}) ([]int64, erro
 			if reply[i] == "" {
 				continue
 			}
+
 			result[i], err = strconv.ParseInt(reply[i], 10, 64)
 			if err != nil {
 				return nil, err
@@ -179,16 +178,13 @@ func (h *Hash) GetInt64s(keySuffix string, fields ...interface{}) ([]int64, erro
 
 // MSet hash hmset
 func (h *Hash) MSet(keySuffix string, fields ...interface{}) (string, error) {
-	key := h.InitKey(keySuffix)
-	args := append([]interface{}{key}, fields...)
-
+	args := append([]interface{}{h.InitKey(keySuffix)}, fields...)
 	return h.String(MASTER, HMSET, args...)
 }
 
 // MSetStruct hash hmset struct
 func (h *Hash) MSetStruct(keySuffix string, p interface{}) (string, error) {
-	key := h.InitKey(keySuffix)
-	return h.String(MASTER, HMSET, redis.Args{key}.AddFlat(p)...)
+	return h.String(MASTER, HMSET, redis.Args{h.InitKey(keySuffix)}.AddFlat(p)...)
 }
 
 // MSetSafe hmset batch by safe
@@ -231,14 +227,12 @@ func (h *Hash) MSetSafe(keySuffix string, blockSize int, fields ...interface{}) 
 
 // GetAllSafe hash get all by safe, hash scan
 func (h *Hash) GetAllSafe(keySuffix string) (map[string]string, error) {
-	key := h.InitKey(keySuffix)
-	return h.ScanAllMap(key, HSCAN)
+	return h.ScanAllMap(h.InitKey(keySuffix), HSCAN)
 }
 
 // GetAllScanStruct get all by struct
 func (h *Hash) GetAllScanStruct(keySuffix string, p interface{}) error {
-	key := h.InitKey(keySuffix)
-	vals, err := h.Values(SLAVE, HGETALL, key)
+	vals, err := h.Values(SLAVE, HGETALL, h.InitKey(keySuffix))
 	if err != nil {
 		return err
 	}
@@ -253,20 +247,17 @@ func (h *Hash) GetAllScanStruct(keySuffix string, p interface{}) error {
 
 // GetAllSlice hget all return slice
 func (h *Hash) GetAllSlice(keySuffix string) ([]string, error) {
-	key := h.InitKey(keySuffix)
-	return h.Strings(SLAVE, HGETALL, key)
+	return h.Strings(SLAVE, HGETALL, h.InitKey(keySuffix))
 }
 
 // ScanAll scan all by safe
 func (h *Hash) ScanAll(keySuffix string) ([]string, error) {
-	key := h.InitKey(keySuffix)
-	return h.Structure.ScanAll(key, HSCAN)
+	return h.Structure.ScanAll(h.InitKey(keySuffix), HSCAN)
 }
 
 // Scan scan by pageSize
 func (h *Hash) Scan(keySuffix string, cursor, pageSize int) (int, []string, error) {
-	key := h.InitKey(keySuffix)
-	return h.Structure.Scan(key, HSCAN, cursor, pageSize)
+	return h.Structure.Scan(h.InitKey(keySuffix), HSCAN, cursor, pageSize)
 }
 
 // Set hset
@@ -281,36 +272,30 @@ func (h *Hash) Set(keySuffix, field string, value interface{}, when int) (int, e
 
 // Increment increment
 func (h *Hash) Increment(keySuffix, field string, value int64) (int64, error) {
-	key := h.InitKey(keySuffix)
-	return h.Int64(MASTER, HINCRBY, key, field, value)
+	return h.Int64(MASTER, HINCRBY, h.InitKey(keySuffix), field, value)
 }
 
 // IncrementByFloat increment float64
 func (h *Hash) IncrementByFloat(keySuffix, field string, value float64) (float64, error) {
-	key := h.InitKey(keySuffix)
-	return h.Float64(MASTER, HINCRBYFLOAT, key, field, value)
+	return h.Float64(MASTER, HINCRBYFLOAT, h.InitKey(keySuffix), field, value)
 }
 
 // Hkeys hkeys
 func (h *Hash) Hkeys(keySuffix string) ([]string, error) {
-	key := h.InitKey(keySuffix)
-	return h.Strings(SLAVE, HKEYS, key)
+	return h.Strings(SLAVE, HKEYS, h.InitKey(keySuffix))
 }
 
 // HLen hlen
 func (h *Hash) HLen(keySuffix string) (int, error) {
-	key := h.InitKey(keySuffix)
-	return h.Int(SLAVE, HLEN, key)
+	return h.Int(SLAVE, HLEN, h.InitKey(keySuffix))
 }
 
 // HVals hvals
 func (h *Hash) HVals(keySuffix string) ([]string, error) {
-	key := h.InitKey(keySuffix)
-	return h.Strings(SLAVE, HVALS, key)
+	return h.Strings(SLAVE, HVALS, h.InitKey(keySuffix))
 }
 
 // HINCRBY hincrby
 func (h *Hash) HINCRBY(keySuffix, field string, value int64) (int64, error) {
-	key := h.InitKey(keySuffix)
-	return h.Int64(MASTER, HINCRBY, key, field, value)
+	return h.Int64(MASTER, HINCRBY, h.InitKey(keySuffix), field, value)
 }
