@@ -9,4 +9,6 @@ const (
 	ZeroInt = 0
 	// ZeroUint64 0
 	ZeroUint64 = uint64(0)
+	// ZeroFLOAT64 0
+	ZeroFLOAT64 = float64(0)
 )

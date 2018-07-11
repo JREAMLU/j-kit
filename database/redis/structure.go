@@ -22,6 +22,10 @@ const (
 	MASTER = true
 	// SLAVE read
 	SLAVE = false
+	// ON refresh on
+	ON = true
+	// OFF refresh OFF
+	OFF = false
 )
 
 // Structure redis structure
@@ -145,6 +149,19 @@ func (s *Structure) Int64(isMaster bool, cmd string, params ...interface{}) (rep
 	return reply, err
 }
 
+// Float64 float64 base operation
+func (s *Structure) Float64(isMaster bool, cmd string, params ...interface{}) (reply float64, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return constant.ZeroFLOAT64, configNotExists(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.Float64(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
 // ScanAllMap scan all return map
 func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
 	cursor := 0
@@ -152,33 +169,114 @@ func (s *Structure) ScanAllMap(key, luaBody string) (map[string]string, error) {
 	if conn == nil {
 		return nil, configNotExists(s.InstanceName, SLAVE)
 	}
+
 	defer conn.Close()
-	connStr := s.getConnstr(false)
+	connStr := s.getConnstr(SLAVE)
 	if connStr == "" {
-		return nil, configNotExists(s.InstanceName, false)
+		return nil, configNotExists(s.InstanceName, SLAVE)
 	}
+
 	script := GetScript(connStr, luaBody)
 	if script == nil {
-		return nil, configNotExists(s.InstanceName, false)
+		return nil, configNotExists(s.InstanceName, SLAVE)
 	}
+
 	result := make(map[string]string)
+
 	for {
 		results, err := redis.Strings(script.Do(conn, 0, key, cursor, _defaultPagesize))
 		if err != nil {
 			return nil, err
 		}
+
 		for i := 1; i < len(results); i = i + 2 {
 			result[results[i]] = results[i+1]
 		}
+
 		cursor, err = strconv.Atoi(results[0])
 		if err != nil {
 			return nil, err
 		}
+
 		if cursor == 0 {
 			break
 		}
 	}
+
 	return result, nil
+}
+
+// ScanAll scan by lua
+func (s *Structure) ScanAll(key, luaBody string) ([]string, error) {
+	cursor := 0
+	conn := s.getConn(SLAVE)
+	if conn == nil {
+		return nil, configNotExists(s.InstanceName, SLAVE)
+	}
+
+	defer conn.Close()
+	var result []string
+	connStr := s.getConnstr(SLAVE)
+	if connStr == "" {
+		return nil, configNotExists(s.InstanceName, SLAVE)
+	}
+
+	script := GetScript(connStr, luaBody)
+	if script == nil {
+		return nil, configNotExists(s.InstanceName, SLAVE)
+	}
+
+	for {
+		results, err := redis.Strings(script.Do(conn, 0, key, cursor, _defaultPagesize))
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, results[1:]...)
+		cursor, err = strconv.Atoi(results[0])
+		if err != nil {
+			return nil, err
+		}
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return result, nil
+}
+
+// Scan scan
+// first return params: int is remain numbers
+func (s *Structure) Scan(key, luaBody string, cursor, pageSize int) (int, []string, error) {
+	conn := s.getConn(SLAVE)
+	if conn == nil {
+		return constant.ZeroInt, nil, configNotExists(s.InstanceName, SLAVE)
+	}
+
+	defer conn.Close()
+	connStr := s.getConnstr(false)
+	if connStr == "" {
+		return constant.ZeroInt, nil, configNotExists(s.InstanceName, SLAVE)
+	}
+
+	script := GetScript(connStr, luaBody)
+	if script == nil {
+		return constant.ZeroInt, nil, configNotExists(s.InstanceName, SLAVE)
+	}
+
+	//第一个0参数是KEYS参数个数
+	reply, err := redis.Strings(script.Do(conn, 0, key, cursor, pageSize))
+	if err != nil {
+		return constant.ZeroInt, nil, err
+	}
+
+	cursor, err = strconv.Atoi(reply[0])
+	if err != nil {
+		return constant.ZeroInt, nil, err
+	}
+
+	return cursor, reply[1:], nil
 }
 
 // Values values
@@ -212,13 +310,13 @@ func (s *Structure) getClientConn(isMaster bool) redis.Conn {
 		s.mutex.Lock()
 		s.writePool = nil
 		s.readPool = nil
-		toggleRefreshPool(s.InstanceName, false)
+		toggleRefreshPool(s.InstanceName, OFF)
 		s.mutex.Unlock()
 	}
 
 	if s.writePool == nil {
-		s.writePool = s.getPool(s.InstanceName, true)
-		s.readPool = s.getPool(s.InstanceName, false)
+		s.writePool = s.getPool(s.InstanceName, MASTER)
+		s.readPool = s.getPool(s.InstanceName, SLAVE)
 	}
 
 	if isMaster {
@@ -245,7 +343,7 @@ func (s *Structure) getClusterConn() redis.Conn {
 			delete(poolcs, s.InstanceName)
 			s.clusterPool = nil
 		}
-		toggleRefreshPool(s.InstanceName, false)
+		toggleRefreshPool(s.InstanceName, OFF)
 		s.mutex.Unlock()
 	}
 

@@ -31,6 +31,20 @@ const (
 	OK = "OK"
 	// HGETALL hgetall
 	HGETALL = "HGETALL"
+	// HSETNX hsetnx
+	HSETNX = "HSETNX"
+	// HSET hset
+	HSET = "HSET"
+	// HINCRBY hincrby
+	HINCRBY = "HINCRBY"
+	// HINCRBYFLOAT hincrbyfloat
+	HINCRBYFLOAT = "HINCRBYFLOAT"
+	// HKEYS hkeys
+	HKEYS = "HKEYS"
+	// HLEN hlen
+	HLEN = "HLEN"
+	// HVALS hvals
+	HVALS = "HVALS"
 )
 
 // NewHash new hash
@@ -235,4 +249,68 @@ func (h *Hash) GetAllScanStruct(keySuffix string, p interface{}) error {
 	}
 
 	return err
+}
+
+// GetAllSlice hget all return slice
+func (h *Hash) GetAllSlice(keySuffix string) ([]string, error) {
+	key := h.InitKey(keySuffix)
+	return h.Strings(SLAVE, HGETALL, key)
+}
+
+// ScanAll scan all by safe
+func (h *Hash) ScanAll(keySuffix string) ([]string, error) {
+	key := h.InitKey(keySuffix)
+	return h.Structure.ScanAll(key, HSCAN)
+}
+
+// Scan scan by pageSize
+func (h *Hash) Scan(keySuffix string, cursor, pageSize int) (int, []string, error) {
+	key := h.InitKey(keySuffix)
+	return h.Structure.Scan(key, HSCAN, cursor, pageSize)
+}
+
+// Set hset
+func (h *Hash) Set(keySuffix, field string, value interface{}, when int) (int, error) {
+	key := h.InitKey(keySuffix)
+	if when == constant.NotExists {
+		return h.Int(MASTER, HSETNX, key, field, value)
+	}
+
+	return h.Int(MASTER, HSET, key, field, value)
+}
+
+// Increment increment
+func (h *Hash) Increment(keySuffix, field string, value int64) (int64, error) {
+	key := h.InitKey(keySuffix)
+	return h.Int64(MASTER, HINCRBY, key, field, value)
+}
+
+// IncrementByFloat increment float64
+func (h *Hash) IncrementByFloat(keySuffix, field string, value float64) (float64, error) {
+	key := h.InitKey(keySuffix)
+	return h.Float64(MASTER, HINCRBYFLOAT, key, field, value)
+}
+
+// Hkeys hkeys
+func (h *Hash) Hkeys(keySuffix string) ([]string, error) {
+	key := h.InitKey(keySuffix)
+	return h.Strings(SLAVE, HKEYS, key)
+}
+
+// HLen hlen
+func (h *Hash) HLen(keySuffix string) (int, error) {
+	key := h.InitKey(keySuffix)
+	return h.Int(SLAVE, HLEN, key)
+}
+
+// HVals hvals
+func (h *Hash) HVals(keySuffix string) ([]string, error) {
+	key := h.InitKey(keySuffix)
+	return h.Strings(SLAVE, HVALS, key)
+}
+
+// HINCRBY hincrby
+func (h *Hash) HINCRBY(keySuffix, field string, value int64) (int64, error) {
+	key := h.InitKey(keySuffix)
+	return h.Int64(MASTER, HINCRBY, key, field, value)
 }
