@@ -93,8 +93,7 @@ func (s *SortedSet) Count(keySuffix string, min, max interface{}) (int64, error)
 
 // IncrByInt64 increment int64
 func (s *SortedSet) IncrByInt64(keySuffix, member string, incr int64) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(MASTER, "ZINCRBY", key, incr, member)
+	return s.Int64(MASTER, ZINCRBY, s.InitKey(keySuffix), incr, member)
 }
 
 // IncrByFloat64 increment float64
@@ -102,59 +101,177 @@ func (s *SortedSet) IncrByFloat64(keySuffix, member string, incr float64) (float
 	return s.Float64(MASTER, ZINCRBY, s.InitKey(keySuffix), incr, member)
 }
 
-// @TODO
-//InterStore 给定的一个或多个有序集的交集，其中给定 key 的数量必须以 numkeys 参数指定，
-//并将该交集(结果集)储存到 destination 。
-//默认情况下，结果集中某个成员的分数值是所有给定集下该成员分数值之和。
+// InterStore interstore destination numkeys key...
 func (s *SortedSet) InterStore(destSuffix string, keySuffix ...string) (int64, error) {
 	params := make([]interface{}, len(keySuffix)+2)
 	params[0] = s.InitKey(destSuffix)
 	params[1] = len(keySuffix)
+
 	for i := range keySuffix {
 		params[i+2] = s.InitKey(keySuffix[i])
 	}
-	return s.Int64(SLAVE, "ZINTERSTORE", params...)
+
+	return s.Int64(SLAVE, ZINTERSTORE, params...)
 }
 
-// func (s *SortedSet) RangeByRank(keySuffix string, start, stop, order int) ([]string, error) {
-// 	key := s.InitKey(keySuffix)
-// 	if order == 0 {
-// 		return s.Strings(SLAVE, "ZRANGE", key, start, stop)
-// 	}
-// 	return s.Strings(SLAVE, "ZREVRANGE", key, start, stop)
-// }
-
-func (s *SortedSet) RangeWITHSCORES(keySuffix string, start, stop int) (map[string]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.StringMap(SLAVE, "ZRANGE", key, start, stop, "WITHSCORES")
+// RangeWs zrange withscores
+func (s *SortedSet) RangeWs(keySuffix string, start, stop int) (map[string]string, error) {
+	return s.StringMap(SLAVE, ZRANGE, s.InitKey(keySuffix), start, stop, WITHSCORES)
 }
 
+// Range zrange
 func (s *SortedSet) Range(keySuffix string, start, stop int) ([]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZRANGE", key, start, stop)
+	return s.Strings(SLAVE, ZRANGE, s.InitKey(keySuffix), start, stop)
 }
 
-//RangeByLex 通过字典区间返回有序集合的成员。
+// RangeByLex rangebylex
 func (s *SortedSet) RangeByLex(keySuffix, min, max string) ([]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZRANGEBYLEX", key, min, max)
+	return s.Strings(SLAVE, ZRANGEBYLEX, s.InitKey(keySuffix), min, max)
 }
 
-//RangeByScore 返回有序集合中指定分数区间的成员列表。有序集成员按分数值递增(从小到大)次序排列。
+// RangeByScore zrangebyscore
 func (s *SortedSet) RangeByScore(keySuffix string, min, max interface{}) ([]string, error) {
 	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZRANGEBYSCORE", key, min, max)
+	return s.Strings(SLAVE, ZRANGEBYSCORE, key, min, max)
 }
 
-func (s *SortedSet) RangeByScoreWITHSCORES(keySuffix string, min, max interface{}) (map[string]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.StringMap(SLAVE, "ZRANGEBYSCORE", key, min, max, "WITHSCORES")
+// RangeByScoreWs rangebyscore withscores
+func (s *SortedSet) RangeByScoreWs(keySuffix string, min, max interface{}) (map[string]string, error) {
+	return s.StringMap(SLAVE, ZRANGEBYSCORE, s.InitKey(keySuffix), min, max, WITHSCORES)
 }
 
-//LexCount 计算有序集合中指定字典区间内成员数量。
+// LexCount zlexcount
 func (s *SortedSet) LexCount(keySuffix, min, max string) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(SLAVE, "ZLEXCOUNT", key, min, max)
+	return s.Int64(SLAVE, ZLEXCOUNT, s.InitKey(keySuffix), min, max)
+}
+
+// ScoreInt64 zscore int64
+func (s *SortedSet) ScoreInt64(keySuffix, member string) (int64, error) {
+	return s.Int64(SLAVE, ZSCORE, s.InitKey(keySuffix), member)
+}
+
+// ScoreFloat64 zscore float64
+func (s *SortedSet) ScoreFloat64(keySuffix, member string) (float64, error) {
+	return s.Float64(SLAVE, ZSCORE, s.InitKey(keySuffix), member)
+}
+
+// Rank rank
+func (s *SortedSet) Rank(keySuffix, member string) (int64, error) {
+	return s.Int64(SLAVE, ZRANK, s.InitKey(keySuffix), member)
+}
+
+// Remove zrem
+func (s *SortedSet) Remove(keySuffix string, members ...string) (int64, error) {
+	params := make([]interface{}, len(members)+1)
+	params[0] = s.InitKey(keySuffix)
+
+	for i := range members {
+		params[i+1] = members[i]
+	}
+
+	return s.Int64(MASTER, ZREM, params...)
+}
+
+// RemoveRangeByLex remrangebylex
+func (s *SortedSet) RemoveRangeByLex(keySuffix string, min, max interface{}) (int64, error) {
+	return s.Int64(MASTER, ZREMRANGEBYLEX, s.InitKey(keySuffix), min, max)
+}
+
+// RemoveRangeByScore remrangebyscore
+func (s *SortedSet) RemoveRangeByScore(keySuffix string, start, stop int64) (int64, error) {
+	return s.Int64(MASTER, ZREMRANGEBYSCORE, s.InitKey(keySuffix), start, stop)
+}
+
+// RemoveRangeByRank remrangebyrank
+func (s *SortedSet) RemoveRangeByRank(keySuffix string, start, stop int64) (int64, error) {
+	return s.Int64(MASTER, ZREMRANGEBYRANK, s.InitKey(keySuffix), start, stop)
+}
+
+// RevRange revrange
+func (s *SortedSet) RevRange(keySuffix string, start, stop int64) ([]string, error) {
+	return s.Strings(SLAVE, ZREVRANGE, s.InitKey(keySuffix), start, stop)
+}
+
+// RevRangeWs revrange withscores
+func (s *SortedSet) RevRangeWs(keySuffix string, start, stop int64) (map[string]string, error) {
+	return s.StringMap(SLAVE, ZREVRANGE, s.InitKey(keySuffix), start, stop, WITHSCORES)
+}
+
+// RevRangesWs revrange slice withscores
+func (s *SortedSet) RevRangesWs(keySuffix string, start, stop int64) ([]string, error) {
+	return s.Strings(SLAVE, ZREVRANGE, s.InitKey(keySuffix), start, stop, WITHSCORES)
+}
+
+// RevRangeByScore revrangebyscore
+func (s *SortedSet) RevRangeByScore(keySuffix string, start, stop interface{}) ([]string, error) {
+	return s.Strings(SLAVE, ZREVRANGEBYSCORE, s.InitKey(keySuffix), start, stop)
+}
+
+// RevRangeByScoreWs revrangebyscore withscores
+func (s *SortedSet) RevRangeByScoreWs(keySuffix string, start, stop interface{}) (map[string]string, error) {
+	return s.StringMap(SLAVE, ZREVRANGEBYSCORE, s.InitKey(keySuffix), start, stop, WITHSCORES)
+}
+
+// RevRangeByScoreWsPage revrangebyscore withscores pagination
+func (s *SortedSet) RevRangeByScoreWsPage(keySuffix string, max, min, offset, count interface{}) (map[string]string, error) {
+	return s.StringMap(SLAVE, ZREVRANGEBYSCORE, s.InitKey(keySuffix), max, min, WITHSCORES, LIMIT, offset, count)
+}
+
+// RevRangeByScoresWsPage revrangebyscore withscores pagination slice
+func (s *SortedSet) RevRangeByScoresWsPage(keySuffix string, max, min, offset, count interface{}) ([]string, error) {
+	return s.Strings(SLAVE, ZREVRANGEBYSCORE, s.InitKey(keySuffix), max, min, WITHSCORES, LIMIT, offset, count)
+}
+
+// RevRank zrevrank
+func (s *SortedSet) RevRank(keySuffix, member string) (int64, error) {
+	return s.Int64(SLAVE, ZREVRANK, s.InitKey(keySuffix), member)
+}
+
+// UnionStore zunionstore aggregate:sum|min|max
+func (s *SortedSet) UnionStore(aggregate, destSuffix string, keySuffix ...string) (int64, error) {
+	params := make([]interface{}, len(keySuffix)+4)
+	params[0] = s.InitKey(destSuffix)
+	params[1] = len(keySuffix)
+
+	for i := range keySuffix {
+		params[i+2] = s.InitKey(keySuffix[i])
+	}
+
+	params[len(params)-2] = AGGREGATE
+	params[len(params)-1] = aggregate
+
+	return s.Int64(MASTER, ZUNIONSTORE, params...)
+}
+
+// UnionStoreByWeights unionstore by weights aggregate:sum|min|max
+func (s *SortedSet) UnionStoreByWeights(weights []interface{}, aggregate, destSuffix string, keySuffix ...string) (int64, error) {
+	numkeys := len(keySuffix)
+	if len(weights) != numkeys || numkeys == 0 {
+		return constant.ZeroInt64, errors.New("params error: weights or key must be not empty")
+	}
+
+	params := make([]interface{}, numkeys+len(weights)+5)
+	params[0] = s.InitKey(destSuffix)
+	params[1] = numkeys
+
+	for i := range keySuffix {
+		params[i+2] = s.InitKey(keySuffix[i])
+	}
+
+	params[numkeys+2] = WEIGHTS
+	for i := range weights {
+		params[numkeys+i+3] = weights[i]
+	}
+
+	params[len(params)-2] = AGGREGATE
+	params[len(params)-1] = aggregate
+
+	return s.Int64(MASTER, ZUNIONSTORE, params...)
+}
+
+// Scan scan
+func (s *SortedSet) Scan(keySuffix string, cursor, pageSize int) (int, []string, error) {
+	return s.Structure.Scan(s.InitKey(keySuffix), ZSCAN, cursor, pageSize)
 }
 
 func (s *SortedSet) getParams(key string, members []string, scores []interface{}) ([]interface{}, error) {
@@ -173,137 +290,4 @@ func (s *SortedSet) getParams(key string, members []string, scores []interface{}
 	}
 
 	return params, nil
-}
-
-func (s *SortedSet) ScoreInt64(keySuffix, member string) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(SLAVE, "ZSCORE", key, member)
-}
-
-func (s *SortedSet) ScoreFloat64(keySuffix, member string) (float64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Float64(SLAVE, "ZSCORE", key, member)
-}
-
-//Rank 返回有序集合中指定成员的索引
-func (s *SortedSet) Rank(keySuffix, member string) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(SLAVE, "ZRANK", key, member)
-}
-
-//Rem 命令用于移除有序集中的一个或多个成员，不存在的成员将被忽略
-func (s *SortedSet) Rem(keySuffix string, members ...string) (int64, error) {
-	params := make([]interface{}, len(members)+1)
-	params[0] = s.InitKey(keySuffix)
-	for i := range members {
-		params[i+1] = members[i]
-	}
-	return s.Int64(MASTER, "ZREM", params...)
-}
-
-//RemRangeByLex 移除有序集合中给定的字典区间的所有成员。
-func (s *SortedSet) RemRangeByLex(keySuffix string, min, max interface{}) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(MASTER, "ZREMRANGEBYLEX", key, min, max)
-}
-
-//RemoveRangeByScore 移除有序集合中给定的排名区间的所有成员
-func (s *SortedSet) RemoveRangeByScore(keySuffix string, start, stop int64) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(MASTER, "ZREMRANGEBYSCORE", key, start, stop)
-}
-
-//RemRangeByRank 移除有序集中，指定排名(rank)区间内的所有成员
-func (s *SortedSet) RemRangeByRank(keySuffix string, start, stop int64) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(MASTER, "ZREMRANGEBYRANK", key, start, stop)
-}
-
-//RevRange 返回有序集中指定区间内的成员，通过索引，分数从高到底
-func (s *SortedSet) RevRange(keySuffix string, start, stop int64) ([]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZREVRANGE", key, start, stop)
-}
-
-//RevRangeWITHSCORES
-func (s *SortedSet) RevRangeWITHSCORES(keySuffix string, start, stop int64) (map[string]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.StringMap(SLAVE, "ZREVRANGE", key, start, stop, "WITHSCORES")
-}
-
-func (s *SortedSet) RevRangeWITHSCORES2(keySuffix string, start, stop int64) ([]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZREVRANGE", key, start, stop, "WITHSCORES")
-}
-
-//RevRangeByScore 返回有序集中指定分数区间内的所有的成员。有序集成员按分数值递减(从大到小)的次序排列。
-//具有相同分数值的成员按字典序的逆序(reverse lexicographical order )排列。
-func (s *SortedSet) RevRangeByScore(keySuffix string, start, stop interface{}) ([]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZREVRANGEBYSCORE", key, start, stop)
-}
-
-func (s *SortedSet) RevRangeByScoreWITHSCORES(keySuffix string, start, stop interface{}) (map[string]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.StringMap(SLAVE, "ZREVRANGEBYSCORE", key, start, stop, "WITHSCORES")
-}
-
-func (s *SortedSet) RevRangeByScoreWITHSCORESAndLimitMap(keySuffix string, max, min, offset, count interface{}) (map[string]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.StringMap(SLAVE, "ZREVRANGEBYSCORE", key, max, min, "WITHSCORES", "LIMIT", offset, count)
-}
-
-func (s *SortedSet) RevRangeByScoreWITHSCORESAndLimitSlice(keySuffix string, max, min, offset, count interface{}) ([]string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Strings(SLAVE, "ZREVRANGEBYSCORE", key, max, min, "WITHSCORES", "LIMIT", offset, count)
-}
-
-//RevRank 返回有序集合中指定成员的排名，有序集成员按分数值递减(从大到小)排序
-func (s *SortedSet) RevRank(keySuffix, member string) (int64, error) {
-	key := s.InitKey(keySuffix)
-	return s.Int64(SLAVE, "ZREVRANK", key, member)
-}
-
-//UnionStore 命令计算给定的一个或多个有序集的并集，
-// 其中给定 key 的数量必须以 numkeys 参数指定，并将该并集(结果集)储存到 destination
-// aggregate:sum|min|max
-// aggregate=sum结果集中某个成员的分数值是所有给定集下该成员分数值之和 。
-func (s *SortedSet) UnionStore(aggregate, destSuffix string, keySuffix ...string) (int64, error) {
-	params := make([]interface{}, len(keySuffix)+4)
-	params[0] = s.InitKey(destSuffix)
-	params[1] = len(keySuffix)
-	for i := range keySuffix {
-		params[i+2] = s.InitKey(keySuffix[i])
-	}
-	params[len(params)-2] = "AGGREGATE"
-	params[len(params)-1] = aggregate
-	return s.Int64(MASTER, "ZUNIONSTORE", params...)
-}
-
-//UnionStoreByWeights aggregate:sum|min|max
-//aggregate=sum结果集中某个成员的分数值是所有给定集下该成员分数值乘以权重值后之和
-func (s *SortedSet) UnionStoreByWeights(weights []interface{}, aggregate, destSuffix string, keySuffix ...string) (int64, error) {
-	numkeys := len(keySuffix)
-	if len(weights) != numkeys || numkeys == 0 {
-		return 0, errors.New("weights is empty!")
-	}
-
-	params := make([]interface{}, numkeys+len(weights)+5)
-	params[0] = s.InitKey(destSuffix)
-	params[1] = numkeys
-	for i := range keySuffix {
-		params[i+2] = s.InitKey(keySuffix[i])
-	}
-	params[numkeys+2] = "WEIGHTS"
-	for i := range weights {
-		params[numkeys+i+3] = weights[i]
-	}
-	params[len(params)-2] = "AGGREGATE"
-	params[len(params)-1] = aggregate
-	return s.Int64(MASTER, "ZUNIONSTORE", params...)
-}
-
-func (s *SortedSet) Scan(keySuffix string, cursor, pageSize int) (int, []string, error) {
-	key := s.InitKey(keySuffix)
-	return s.Structure.Scan(key, ZSCAN, cursor, pageSize)
 }

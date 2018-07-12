@@ -216,23 +216,6 @@ func (s *String) MSetNX(keySuffix []string, value []interface{}) (int, error) {
 	return s.Int(MASTER, MSETNX, params...)
 }
 
-func (s *String) getParams(keySuffix []string, value []interface{}) ([]interface{}, error) {
-	if len(keySuffix) != len(value) {
-		return nil, errors.New("params error: key, value len must be equal")
-	}
-
-	params := make([]interface{}, len(keySuffix)*2)
-	n := 0
-	for i := range keySuffix {
-		params[n] = s.InitKey(fmt.Sprint(keySuffix[i]))
-		n++
-		params[n] = value[i]
-		n++
-	}
-
-	return params, nil
-}
-
 // PSetEX psetex
 func (s *String) PSetEX(keySuffix, value string, milliseconds int) (bool, error) {
 	ok, err := s.String(MASTER, PSETEX, s.InitKey(keySuffix), milliseconds, value)
@@ -271,4 +254,21 @@ func (s *String) DecrBy(keySuffix string, value int) (int, error) {
 // Append append
 func (s *String) Append(keySuffix, value string) (int, error) {
 	return s.Int(MASTER, APPEND, s.InitKey(keySuffix), value)
+}
+
+func (s *String) getParams(keySuffix []string, value []interface{}) ([]interface{}, error) {
+	if len(keySuffix) != len(value) {
+		return nil, errors.New("params error: key, value len must be equal")
+	}
+
+	params := make([]interface{}, len(keySuffix)*2)
+	n := 0
+	for i := range keySuffix {
+		params[n] = s.InitKey(fmt.Sprint(keySuffix[i]))
+		n++
+		params[n] = value[i]
+		n++
+	}
+
+	return params, nil
 }
