@@ -28,6 +28,20 @@ const (
 	OFF = false
 	// OK ok
 	OK = "OK"
+	// NX nx
+	NX = "NX"
+	// EX ex
+	EX = "EX"
+	// PX px
+	PX = "PX"
+	// XX xx
+	XX = "XX"
+	// WITHSCORES withscores
+	WITHSCORES = "WITHSCORES"
+	// LIMIT limit
+	LIMIT = "LIMIT"
+	// WEIGHTS weights
+	WEIGHTS = "WEIGHTS"
 )
 
 // Structure redis structure
@@ -107,6 +121,19 @@ func (s *Structure) Strings(isMaster bool, cmd string, params ...interface{}) (r
 	}
 
 	reply, err = redis.Strings(conn.Do(cmd, params...))
+	conn.Close()
+
+	return reply, err
+}
+
+// StringMap stringmap base operation
+func (s *Structure) StringMap(isMaster bool, cmd string, params ...interface{}) (reply map[string]string, err error) {
+	conn := s.getConn(isMaster)
+	if conn == nil {
+		return nil, configNotExistsOrLoad(s.InstanceName, isMaster)
+	}
+
+	reply, err = redis.StringMap(conn.Do(cmd, params...))
 	conn.Close()
 
 	return reply, err

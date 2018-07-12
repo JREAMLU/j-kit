@@ -107,6 +107,28 @@ func (s *String) Set(keySuffix string, value interface{}, when int) (bool, error
 	return ok == OK, nil
 }
 
+// SetnxSetexPsetexLock set [ex|px] [nx|xx]
+func (s *String) SetnxSetexPsetexLock(keySuffix string, value interface{}, when int) (bool, error) {
+	key := s.InitKey(keySuffix)
+
+	var (
+		ok  string
+		err error
+	)
+
+	if when == constant.Always {
+		ok, err = s.String(MASTER, SET, key, value, NX)
+	} else {
+		ok, err = s.String(MASTER, SET, key, value, EX, when, NX)
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return ok == OK, nil
+}
+
 // GetSet getset
 func (s *String) GetSet(keySuffix string) (string, error) {
 	return s.String(SLAVE, GETSET, s.InitKey(keySuffix))
