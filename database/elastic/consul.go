@@ -36,6 +36,7 @@ func LoadConfig(consulAddr string, isWatching, debug bool, names ...string) (map
 		return nil, err
 	}
 
+	// @TODO watch
 	if isWatching {
 
 	}
