@@ -12,8 +12,6 @@ import (
 // Elastic Elastic client
 type Elastic struct {
 	client *elastic.Client
-	Index  string
-	Sort   string
 	Infos  []*elastic.PingResult
 	Codes  []int
 }

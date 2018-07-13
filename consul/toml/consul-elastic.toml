@@ -1,0 +1,5 @@
+InstanceName = "BGCluster" #InstanceName is base key
+Debug = false
+URLs = [
+    "http://10.200.202.36:9200/",
+]

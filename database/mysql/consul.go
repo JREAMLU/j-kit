@@ -173,6 +173,7 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		if err != nil {
 			return nil, err
 		}
+
 		var config Config
 		if _, err = toml.Decode(buf, &config); err != nil {
 			return nil, err
@@ -183,6 +184,7 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		if err != nil {
 			return nil, err
 		}
+
 		// set pool
 		rwdb.DB().SetMaxOpenConns(MaxOpenConns)
 		rwdb.DB().SetMaxIdleConns(MaxIdleConns)
@@ -195,8 +197,10 @@ func loadConfig(client *consul.Client, keys []string) (map[string]*gorm.DB, erro
 		if err != nil {
 			return nil, err
 		}
+
 		rdb.DB().SetMaxOpenConns(MaxOpenConns)
 		rdb.DB().SetMaxIdleConns(MaxIdleConns)
+
 		mutex.Lock()
 		dbs[GetReadOnly(instanceName)] = rdb
 		mutex.Unlock()
@@ -213,6 +217,7 @@ func registerDatabase(name string, config Config, isWrite bool) (*gorm.DB, error
 		} else {
 			charset = config.ReadWrite.CharSet
 		}
+
 		conn := fmt.Sprintf(Conn, config.ReadWrite.UserID, config.ReadWrite.Password,
 			config.ReadWrite.Server, config.ReadWrite.Port, config.DBName, charset, Local)
 		db, err := gorm.Open(Driver, conn)
@@ -226,6 +231,7 @@ func registerDatabase(name string, config Config, isWrite bool) (*gorm.DB, error
 	} else {
 		charset = config.ReadOnly.CharSet
 	}
+
 	conn := fmt.Sprintf(Conn, config.ReadOnly.UserID, config.ReadOnly.Password,
 		config.ReadOnly.Server, config.ReadOnly.Port, config.DBName, charset, Local)
 	db, err := gorm.Open(Driver, conn)
