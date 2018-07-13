@@ -7,25 +7,26 @@ import (
 )
 
 const (
-	esURL = `http://127.0.0.1:9200`
+	esURL = `http://10.200.202.36:9200/`
 )
 
 func TestNewElastic(t *testing.T) {
 	Convey("new elastic test", t, func() {
-		esClient, err := NewElastic(esURL)
+		esClient, err := NewElastic(false, []string{esURL})
 		So(err, ShouldBeNil)
-		So(esClient.Code, ShouldEqual, 200)
+		So(esClient.Codes[0], ShouldEqual, 200)
 
 		t.Log(err)
-		t.Log(esClient)
-		t.Log("return code: ", esClient.Code)
-		t.Log("cluster name: ", esClient.Info.ClusterName)
-		t.Log("name: ", esClient.Info.Name)
-		t.Log("tag line: ", esClient.Info.TagLine)
-		t.Log("build hash: ", esClient.Info.Version.BuildHash)
-		t.Log("build snapshot: ", esClient.Info.Version.BuildSnapshot)
-		t.Log("build timestamp: ", esClient.Info.Version.BuildTimestamp)
-		t.Log("lucene version: ", esClient.Info.Version.LuceneVersion)
-		t.Log("elasticsearch version: ", esClient.Info.Version.Number)
+		for i := range esClient.Codes {
+			t.Log("return code: ", esClient.Codes[i])
+			t.Log("cluster name: ", esClient.Infos[i].ClusterName)
+			t.Log("name: ", esClient.Infos[i].Name)
+			t.Log("tag line: ", esClient.Infos[i].TagLine)
+			t.Log("build hash: ", esClient.Infos[i].Version.BuildHash)
+			t.Log("build snapshot: ", esClient.Infos[i].Version.BuildSnapshot)
+			t.Log("build timestamp: ", esClient.Infos[i].Version.BuildTimestamp)
+			t.Log("lucene version: ", esClient.Infos[i].Version.LuceneVersion)
+			t.Log("elasticsearch version: ", esClient.Infos[i].Version.Number)
+		}
 	})
 }
