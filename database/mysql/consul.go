@@ -85,7 +85,9 @@ func watching(consulAddr string, names ...string) {
 					continue
 				}
 
-				gx = ngx
+				mutex.Lock()
+				gx[node] = ngx[node]
+				mutex.Unlock()
 			}
 		}
 	}()

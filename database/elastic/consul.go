@@ -45,8 +45,9 @@ func watching(consulAddr string, debug bool, names ...string) {
 					continue
 				}
 
-				// @TODO Q
-				esCients = nEsclient
+				mutex.Lock()
+				esCients[node] = nEsclient[node]
+				mutex.Unlock()
 			}
 		}
 	}()
