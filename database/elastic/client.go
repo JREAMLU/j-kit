@@ -19,7 +19,7 @@ type Elastic struct {
 // NewElastic new elastic
 func NewElastic(debug bool, urls []string) (*Elastic, error) {
 	if len(urls) == constant.ZeroInt {
-		return nil, errors.New(constant.ESUrlNotEmpty)
+		return nil, errors.New("ELASTIC URL NOT EMPTY")
 	}
 
 	ctx := context.Background()

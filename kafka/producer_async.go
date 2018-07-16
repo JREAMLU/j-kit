@@ -42,7 +42,7 @@ func (producer *AsyncProducer) Send(p []byte) error {
 	}:
 		return nil
 	default:
-		return errors.New("kafka channel is full")
+		return errors.New("KAFKA CHANNEL IS FULL")
 	}
 }
 
@@ -84,7 +84,7 @@ func (producer *AsyncProducer) SendWithTopic(topic string, p []byte) error {
 	}:
 		return nil
 	default:
-		return errors.New("kafka channel is full")
+		return errors.New("KAFKA CHANNEL IS FULL")
 	}
 }
 
@@ -98,7 +98,7 @@ func (producer *AsyncProducer) SendWithKey(key string, p []byte) error {
 	}:
 		return nil
 	default:
-		return errors.New("kafka channel is full")
+		return errors.New("KAFKA CHANNEL IS FULL")
 	}
 }
 
@@ -112,7 +112,7 @@ func (producer *AsyncProducer) SendWithKeyAndTopic(key, topic string, p []byte) 
 	}:
 		return nil
 	default:
-		return errors.New("kafka channel is full")
+		return errors.New("KAFKA CHANNEL IS FULL")
 	}
 }
 

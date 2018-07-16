@@ -35,7 +35,7 @@ func (g *Geo) Add(keySuffix string, longitude, latitude, member interface{}) (in
 // Adds add multi
 func (g *Geo) Adds(keySuffix string, longitudes, latitudes, members []interface{}) (int64, error) {
 	if len(longitudes) != len(latitudes) || len(longitudes) != len(members) {
-		return constant.ZeroInt64, errors.New("param error: slice len must be equal")
+		return constant.ZeroInt64, errors.New("SLICE LEN MUST BE EQUAL")
 	}
 
 	params := make([]interface{}, len(longitudes)*3+1)
@@ -63,7 +63,7 @@ func (g *Geo) Pos(keySuffix string, member interface{}) (longitude float64, lati
 	}
 
 	if len(results) <= 0 {
-		return longitude, latitude, errors.New("Float64Slice reply is nil")
+		return longitude, latitude, errors.New("FLOAT64SLICE REPLY IS NIL")
 	}
 
 	item := results[0]
@@ -129,7 +129,7 @@ func (g *Geo) Radius(keySuffix string, longitude, latitude, radius interface{}, 
 
 			results = append(results, result)
 		default:
-			return nil, errors.New("wrong type, not []interface{}")
+			return nil, errors.New("TYPE WRONG,  NOT []interface{}")
 		}
 	}
 

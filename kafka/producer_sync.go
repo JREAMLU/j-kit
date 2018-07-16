@@ -47,7 +47,7 @@ func NewSyncProducer(topic string, kafkaAddrs []string, debug bool) (*SyncProduc
 // Close close
 func (producer *SyncProducer) Close() error {
 	if producer.syncProducer == nil {
-		return errors.New("producer is nil")
+		return errors.New("PRODUCER IS NIL")
 	}
 
 	return producer.syncProducer.Close()

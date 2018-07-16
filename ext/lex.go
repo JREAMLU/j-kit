@@ -64,7 +64,7 @@ func (t itemType) String() string {
 	case itemLineComment:
 		return "lineComment"
 	default:
-		panic(errors.New("unexpected itemType"))
+		panic(errors.New("UNEXPECTED ITEMTYPE"))
 	}
 }
 

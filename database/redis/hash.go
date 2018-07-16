@@ -190,11 +190,11 @@ func (h *Hash) MSetStruct(keySuffix string, p interface{}) (string, error) {
 // blockSize muset be even, eg: blockSize=500, update 250 of 500
 func (h *Hash) MSetSafe(keySuffix string, blockSize int, fields ...interface{}) (string, error) {
 	if len(fields) == 0 || len(fields)%2 == 1 {
-		return constant.EmptyStr, errors.New("error: fields len not zero, fields must be even")
+		return constant.EmptyStr, errors.New("FIELDS LEN NOT ZERO, FIELDS MUST BE EVEN")
 	}
 
 	if blockSize%2 == 1 {
-		return constant.EmptyStr, errors.New("error: blockSize must be even")
+		return constant.EmptyStr, errors.New("BLOCKSIZE MUST BE EVEN")
 	}
 
 	key := h.InitKey(keySuffix)

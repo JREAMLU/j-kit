@@ -85,5 +85,5 @@ func ServerIP() (string, error) {
 		}
 	}
 
-	return "", errors.New("are you connected to the network?")
+	return "", errors.New("ARE YOU CONNECTED TO THE NETWORK?")
 }

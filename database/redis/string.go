@@ -258,7 +258,7 @@ func (s *String) Append(keySuffix, value string) (int, error) {
 
 func (s *String) getParams(keySuffix []string, value []interface{}) ([]interface{}, error) {
 	if len(keySuffix) != len(value) {
-		return nil, errors.New("params error: key, value len must be equal")
+		return nil, errors.New("KEY, VALUE LEN MUST BE EQUAL")
 	}
 
 	params := make([]interface{}, len(keySuffix)*2)

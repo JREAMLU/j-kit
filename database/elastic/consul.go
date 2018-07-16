@@ -1,11 +1,13 @@
 package elastic
 
 import (
+	"log"
 	"path"
 	"sync"
 
 	"github.com/BurntSushi/toml"
 	"github.com/JREAMLU/j-kit/consul"
+	"github.com/hashicorp/consul/api"
 )
 
 // Config elastic in consul
@@ -17,6 +19,38 @@ type Config struct {
 
 var esCients map[string]*Elastic
 var mutex sync.Mutex
+
+// Watch watch config
+func Watch(consulAddr string, reloadConfig chan string, names ...string) {
+	for i := range names {
+		go func(name string) {
+			consul.WatchKey(consulAddr, path.Join(consul.ElasticSearch, name), func(kvPair *api.KVPair) {
+				reloadConfig <- name
+			})
+		}(names[i])
+	}
+}
+
+func watching(consulAddr string, debug bool, names ...string) {
+	watchdNode := make(chan string)
+	Watch(consulAddr, watchdNode, names...)
+	go func() {
+		for {
+			select {
+			case node := <-watchdNode:
+				log.Printf("changed: %v \r\n", node)
+				nEsclient, err := LoadConfig(consulAddr, false, debug, node)
+				if err != nil {
+					log.Printf("Failed on mysql LoadConfig, watchedNode: %v, err: %v \r\n", node, err)
+					continue
+				}
+
+				// @TODO Q
+				esCients = nEsclient
+			}
+		}
+	}()
+}
 
 // Load load elastic
 func Load(consulAddr string, isWatching, debug bool, names ...string) error {
@@ -36,9 +70,8 @@ func LoadConfig(consulAddr string, isWatching, debug bool, names ...string) (map
 		return nil, err
 	}
 
-	// @TODO watch
 	if isWatching {
-
+		watching(consulAddr, debug, names...)
 	}
 
 	if len(names) == 0 {

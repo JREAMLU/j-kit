@@ -247,7 +247,7 @@ func (s *SortedSet) UnionStore(aggregate, destSuffix string, keySuffix ...string
 func (s *SortedSet) UnionStoreByWeights(weights []interface{}, aggregate, destSuffix string, keySuffix ...string) (int64, error) {
 	numkeys := len(keySuffix)
 	if len(weights) != numkeys || numkeys == 0 {
-		return constant.ZeroInt64, errors.New("params error: weights or key must be not empty")
+		return constant.ZeroInt64, errors.New("WEIGHTS OR KEY MUST BE NOT EMPTY")
 	}
 
 	params := make([]interface{}, numkeys+len(weights)+5)
@@ -276,7 +276,7 @@ func (s *SortedSet) Scan(keySuffix string, cursor, pageSize int) (int, []string,
 
 func (s *SortedSet) getParams(key string, members []string, scores []interface{}) ([]interface{}, error) {
 	if len(members) != len(scores) {
-		return nil, errors.New("params error: members, scores len must be equal")
+		return nil, errors.New("MEMBERS, SCORES LEN MUST BE EQUAL")
 	}
 
 	params := make([]interface{}, len(members)*2+1)
