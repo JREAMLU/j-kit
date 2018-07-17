@@ -10,7 +10,7 @@ import (
 
 // StartConsumeFromKafka consumer kafka
 func StartConsumeFromKafka(zkroot, groupName string, topics, zookeeper []string, f func(*sarama.ConsumerMessage) error) {
-	sarama.Logger = log.New(os.Stdout, "[relationship]", log.LstdFlags|log.Lshortfile)
+	sarama.Logger = log.New(os.Stdout, "[KAFKA]", log.LstdFlags|log.Lshortfile)
 	cg, err := JoinConsumerGroup(zkroot, groupName, topics, zookeeper)
 	if err != nil {
 		log.Fatal(err)
