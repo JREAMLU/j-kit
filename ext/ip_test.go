@@ -39,10 +39,32 @@ func TestServerIP(t *testing.T) {
 	})
 }
 
+func TestExtractIP(t *testing.T) {
+	Convey("Extract IP test", t, func() {
+		Convey("correct", func() {
+			ip, err := ExtractIP("")
+			So(err, ShouldBeNil)
+			So(ip, ShouldNotBeEmpty)
+		})
+	})
+}
+
 func BenchmarkIP2Int(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ip := "255.255.255.255"
 		ipInt := IP2Int(ip)
 		Int2IP(ipInt)
+	}
+}
+
+func BenchmarkServerIP(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ServerIP()
+	}
+}
+
+func BenchmarkExtractAddress(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ExtractIP("")
 	}
 }
