@@ -131,8 +131,8 @@ func (client *Client) KV() *api.KV {
 }
 
 // Deregister deregister
-func (client *Client) Deregister() error {
-	return client.consulClient.Agent().ServiceDeregister("api.srv")
+func (client *Client) Deregister(serviceName string) error {
+	return client.consulClient.Agent().ServiceDeregister(serviceName)
 }
 
 // Put put kv

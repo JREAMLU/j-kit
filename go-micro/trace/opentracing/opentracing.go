@@ -4,11 +4,13 @@ package opentracing
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
 	"github.com/micro/go-micro/server"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 type otWrapper struct {
@@ -45,10 +47,35 @@ func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{
 	if err != nil {
 		return err
 	}
-	fmt.Println("++++++++++++: call")
 	defer span.Finish()
 
-	return o.Client.Call(ctx, req, rsp, opts...)
+	r := req.Request()
+	t := reflect.TypeOf(r)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	fieldNum := t.NumField()
+	result := make([]string, 0, fieldNum)
+	for i := 0; i < fieldNum; i++ {
+		result = append(result, t.Field(i).Name)
+	}
+	fmt.Println("++++++++++++: ", result)
+	fmt.Println("++++++++++++: ", req.Request())
+
+	span.LogFields(
+		log.String("callSrv", req.Service()),
+		log.String("method", req.Method()),
+		log.String("content-type", req.ContentType()),
+		// log.String("params", req.Request().(string)),
+	)
+
+	err = o.Client.Call(ctx, req, rsp, opts...)
+	if err != nil {
+		span.LogEvent(fmt.Sprintf("CALL ERROR: %v", err))
+		return err
+	}
+
+	return nil
 }
 
 func (o *otWrapper) Publish(ctx context.Context, p client.Message, opts ...client.PublishOption) error {
