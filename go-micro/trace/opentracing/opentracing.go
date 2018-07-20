@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
 	"github.com/micro/go-micro/server"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
 )
 
 type otWrapper struct {
@@ -59,14 +59,12 @@ func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{
 	for i := 0; i < fieldNum; i++ {
 		result = append(result, t.Field(i).Name)
 	}
-	fmt.Println("++++++++++++: ", result)
-	fmt.Println("++++++++++++: ", req.Request())
 
-	span.LogFields(
-		log.String("callSrv", req.Service()),
-		log.String("method", req.Method()),
-		log.String("content-type", req.ContentType()),
-		// log.String("params", req.Request().(string)),
+	span.LogKV(
+		"TargetSRV", req.Service(),
+		"Method", req.Method(),
+		"ContentType", req.ContentType(),
+		"Params", req.Request().(proto.Message).String(),
 	)
 
 	err = o.Client.Call(ctx, req, rsp, opts...)
