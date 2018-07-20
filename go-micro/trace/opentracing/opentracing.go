@@ -5,8 +5,11 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
+	"github.com/JREAMLU/j-kit/ext"
 	"github.com/gogo/protobuf/proto"
+	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
 	"github.com/micro/go-micro/server"
@@ -17,6 +20,37 @@ type otWrapper struct {
 	ot opentracing.Tracer
 	client.Client
 }
+
+const (
+	prefixTracerState = "x-b3-" // we default to interop with non-opentracing zipkin tracers
+	prefixBaggage     = "ot-baggage-"
+
+	tracerStateFieldCount = 3 // not 5, X-B3-ParentSpanId is optional and we allow optional Sampled header
+	zipkinTraceID         = prefixTracerState + "traceid"
+	zipkinSpanID          = prefixTracerState + "spanid"
+	zipkinParentSpanID    = prefixTracerState + "parentspanid"
+	zipkinSampled         = prefixTracerState + "sampled"
+	zipkinFlags           = prefixTracerState + "flags"
+)
+
+var (
+	// HeaderPrefix micro header prefix
+	HeaderPrefix = micro.HeaderPrefix
+	// FromService from service
+	FromService = "From-Service"
+	// TargetSRV target srv
+	TargetSRV = "TargetSRV"
+	// FromSRV from srv
+	FromSRV = "FromSRVs"
+	// Method method
+	Method = "Method"
+	// ContentType contenttype
+	ContentType = "ContentType"
+	// Params params
+	Params = "Paramss"
+	// Unknow unknow
+	Unknow = "unknow"
+)
 
 func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name string) (context.Context, opentracing.Span, error) {
 	md, ok := metadata.FromContext(ctx)
@@ -61,10 +95,10 @@ func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{
 	}
 
 	span.LogKV(
-		"TargetSRV", req.Service(),
-		"Method", req.Method(),
-		"ContentType", req.ContentType(),
-		"Params", req.Request().(proto.Message).String(),
+		TargetSRV, req.Service(),
+		Method, req.Method(),
+		ContentType, req.ContentType(),
+		Params, req.Request().(proto.Message).String(),
 	)
 
 	err = o.Client.Call(ctx, req, rsp, opts...)
@@ -121,11 +155,20 @@ func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
 			}
 			defer span.Finish()
 
+			fromService := Unknow
+			if xctx, ok := metadata.FromContext(ctx); ok {
+				key := strings.ToLower(ext.StringSplice(HeaderPrefix, FromService))
+				if srv, ok := xctx[key]; ok {
+					fromService = srv
+				}
+			}
+
 			span.LogKV(
-				"RecieveSRV", req.Service(),
-				"Method", req.Method(),
-				"ContentType", req.ContentType(),
-				"Params", req.Request().(proto.Message).String(),
+				FromSRV, fromService,
+				TargetSRV, req.Service(),
+				Method, req.Method(),
+				ContentType, req.ContentType(),
+				Params, req.Request().(proto.Message).String(),
 			)
 
 			return h(ctx, req, rsp)
