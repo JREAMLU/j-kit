@@ -121,6 +121,13 @@ func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
 			}
 			defer span.Finish()
 
+			span.LogKV(
+				"RecieveSRV", req.Service(),
+				"Method", req.Method(),
+				"ContentType", req.ContentType(),
+				"Params", req.Request().(proto.Message).String(),
+			)
+
 			return h(ctx, req, rsp)
 		}
 	}
