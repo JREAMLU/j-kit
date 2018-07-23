@@ -54,6 +54,10 @@ func NewTrace(serviceName, version string, kafkaAddrs []string, kafkaTopic strin
 // TraceLog log
 func TraceLog(ctx context.Context, logger string) {
 	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
+		return
+	}
+
 	span.LogEvent(logger)
 	span.Finish()
 }
