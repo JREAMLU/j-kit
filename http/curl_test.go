@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -9,7 +10,7 @@ import (
 func TestRequestCURL(t *testing.T) {
 	Convey("RequestCURL test", t, func() {
 		Convey("no timeout", func() {
-			res, err := request(5, 0, nil)
+			res, err := request(10, 0, nil)
 			So(err, ShouldBeNil)
 			So(res, ShouldNotBeEmpty)
 		})
@@ -36,15 +37,17 @@ func TestRequestCURL(t *testing.T) {
 }
 
 func request(timeout int64, retry int64, data interface{}) (Responses, error) {
-	req := NewRequests(timeout)
+	req := NewRequests(nil)
+	req.SetTimeout(timeout)
+	req.SetRetryTimes(retry)
 	resp, err := req.RequestCURL(
+		context.Background(),
 		"POST",
 		"http://localhost/study/curl/servera.php",
 		map[string]string{
 			"Content-Type": "application/json;charset=UTF-8;",
 		},
 		`{"name":"KII","age":24}`,
-		retry,
 		data,
 	)
 

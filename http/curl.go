@@ -1,16 +1,20 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Requests struct
 type Requests struct {
-	HTTPClient *http.Client
+	HTTPClient   *http.Client
+	TraceRequest RequestFunc
 }
 
 // Responses struct
@@ -20,38 +24,68 @@ type Responses struct {
 	Data     interface{}
 }
 
-const (
-	// MaxIdleConnections maxIdleConnections
-	MaxIdleConnections = 100
-	// MaxConnectionIdleTime 连接池中一个连接可以idle的时长
-	MaxConnectionIdleTime = 60 * time.Second
+var (
+	// maxIdleConnections maxIdleConnections
+	maxIdleConnections int64 = 100
+	// maxConnectionIdleTime in pools, one connect can idle time
+	maxConnectionIdleTime       = 60 * time.Second
+	timeout               int64 = 3
+	retryTimes            int64 = 1
 )
 
 // NewRequests new requests
-func NewRequests(timeout int64) *Requests {
+func NewRequests(tracer opentracing.Tracer) *Requests {
 	return &Requests{
 		HTTPClient: &http.Client{
 			Transport: &http.Transport{
-				MaxIdleConnsPerHost: MaxIdleConnections,
-				IdleConnTimeout:     MaxConnectionIdleTime,
+				MaxIdleConnsPerHost: int(maxIdleConnections),
+				IdleConnTimeout:     maxConnectionIdleTime,
 			},
 			Timeout: time.Duration(timeout) * time.Second,
 		},
+		TraceRequest: ToHTTPRequest(tracer),
 	}
 }
 
+// SetTimeout http client timeout
+func (r *Requests) SetTimeout(timeout int64) {
+	r.HTTPClient.Timeout = time.Duration(timeout) * time.Second
+}
+
+// SetMaxIdleConnsPerHost set idle time
+func (r *Requests) SetMaxIdleConnsPerHost(maxIdleConnections int64) {
+	r.HTTPClient.Transport = &http.Transport{
+		MaxIdleConnsPerHost: int(maxIdleConnections),
+		IdleConnTimeout:     maxConnectionIdleTime,
+	}
+}
+
+// SetIdleConnTimeout set idle timeout
+func (r *Requests) SetIdleConnTimeout(maxConnectionIdleTime time.Duration) {
+	r.HTTPClient.Transport = &http.Transport{
+		MaxIdleConnsPerHost: int(maxIdleConnections),
+		IdleConnTimeout:     maxConnectionIdleTime,
+	}
+}
+
+// SetRetryTimes set retry times
+func (r *Requests) SetRetryTimes(times int64) {
+	retryTimes = times
+}
+
 //RequestCURL http请求url
-func (r *Requests) RequestCURL(Method string, URLStr string, Header map[string]string, Raw string, RetryTimes int64, data interface{}) (rp Responses, err error) {
+func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string, Header map[string]string, Raw string, data interface{}) (rp Responses, err error) {
 	var i int64
 	req, err := http.NewRequest(
 		Method,
 		URLStr,
 		strings.NewReader(Raw),
 	)
-
 	if err != nil {
 		return rp, err
 	}
+
+	req = r.TraceRequest(req.WithContext(ctx))
 
 	for hkey, hval := range Header {
 		req.Header.Set(hkey, hval)
@@ -62,7 +96,7 @@ RELOAD:
 	resp, err := r.HTTPClient.Do(req)
 	if err != nil {
 		i++
-		if i < RetryTimes {
+		if i < retryTimes {
 			goto RELOAD
 		}
 		return rp, err
