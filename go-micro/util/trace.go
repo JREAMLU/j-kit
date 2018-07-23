@@ -1,6 +1,8 @@
 package util
 
 import (
+	"context"
+
 	"github.com/JREAMLU/j-kit/ext"
 	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
 
@@ -47,6 +49,13 @@ func NewTrace(serviceName, version string, kafkaAddrs []string, kafkaTopic strin
 	}
 
 	return tracer, nil
+}
+
+// TraceLog log
+func TraceLog(ctx context.Context, logger string) {
+	span := opentracing.SpanFromContext(ctx)
+	span.LogEvent(logger)
+	span.Finish()
 }
 
 // SetZipkin set zipkin trace
