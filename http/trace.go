@@ -7,27 +7,29 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/openzipkin/zipkin-go-opentracing/thrift/gen-go/zipkincore"
 )
 
-func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name string) (context.Context, opentracing.Span, error) {
+func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		md = make(map[string]string)
 	}
 
 	var span opentracing.Span
-	wireContext, err := tracer.Extract(opentracing.TextMap, opentracing.TextMapCarrier(md))
+	wireContext, err := tracer.Extract(opentracing.TextMap, opentracing.HTTPHeadersCarrier(req.Header))
 	if err != nil {
 		span = tracer.StartSpan(name)
 	} else {
 		span = tracer.StartSpan(name, opentracing.ChildOf(wireContext))
 	}
 
-	if err := span.Tracer().Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(md)); err != nil {
+	err = span.Tracer().Inject(span.Context(), opentracing.TextMap, opentracing.HTTPHeadersCarrier(req.Header))
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -36,96 +38,92 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 	return ctx, span, nil
 }
 
+// @TODO ChildOf
+func traceIntoContext2(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
+	span := opentracing.SpanFromContext(req.Context())
+	ext.SpanKindRPCClient.Set(span)
+
+	// Add some standard OpenTracing tags, useful in an HTTP request.
+	ext.HTTPMethod.Set(span, req.Method)
+	span.SetTag(zipkincore.HTTP_HOST, req.URL.Host)
+	span.SetTag(zipkincore.HTTP_PATH, req.URL.Path)
+	ext.HTTPUrl.Set(
+		span,
+		fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path),
+	)
+
+	// Add information on the peer service we're about to contact.
+	if host, portString, err := net.SplitHostPort(req.URL.Host); err == nil {
+		ext.PeerHostname.Set(span, host)
+		if port, err := strconv.Atoi(portString); err != nil {
+			ext.PeerPort.Set(span, uint16(port))
+		}
+	} else {
+		ext.PeerHostname.Set(span, req.URL.Host)
+	}
+
+	// Inject the Span context into the outgoing HTTP Request.
+	if err := tracer.Inject(
+		span.Context(),
+		opentracing.TextMap,
+		opentracing.HTTPHeadersCarrier(req.Header),
+	); err != nil {
+		fmt.Printf("error encountered while trying to inject span: %+v\n", err)
+	}
+
+	return ctx, span, nil
+}
+
 // RequestFunc is a middleware function for outgoing HTTP requests.
 type RequestFunc func(req *http.Request) *http.Request
 
-// ToHTTPRequest returns a RequestFunc that injects an OpenTracing Span found in
-// context into the HTTP Headers. If no such Span can be found, the RequestFunc
-// is a noop.
-func ToHTTPRequest(tracer opentracing.Tracer) RequestFunc {
+// CallHTTPRequest to http
+func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 	return func(req *http.Request) *http.Request {
-		// Retrieve the Span from context.
-		// @TODO span == nil
-		// ctx, span, err := traceIntoContext(req.Context(), tracer, "httpTarget")
-		// if err == nil {
-		// 	fmt.Println("++++++++++++: ", ctx)
-		// 	defer span.Finish()
-		// }
+		name := fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
 
-		if span := opentracing.SpanFromContext(req.Context()); span != nil {
-
-			// We are going to use this span in a client request, so mark as such.
-			ext.SpanKindRPCClient.Set(span)
-
-			// Add some standard OpenTracing tags, useful in an HTTP request.
-			ext.HTTPMethod.Set(span, req.Method)
-			span.SetTag(zipkincore.HTTP_HOST, req.URL.Host)
-			span.SetTag(zipkincore.HTTP_PATH, req.URL.Path)
-			ext.HTTPUrl.Set(
-				span,
-				fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path),
-			)
-
-			// Add information on the peer service we're about to contact.
-			if host, portString, err := net.SplitHostPort(req.URL.Host); err == nil {
-				ext.PeerHostname.Set(span, host)
-				if port, err := strconv.Atoi(portString); err != nil {
-					ext.PeerPort.Set(span, uint16(port))
-				}
-			} else {
-				ext.PeerHostname.Set(span, req.URL.Host)
-			}
-
-			// Inject the Span context into the outgoing HTTP Request.
-			if err := tracer.Inject(
-				span.Context(),
-				opentracing.TextMap,
-				opentracing.HTTPHeadersCarrier(req.Header),
-			); err != nil {
-				fmt.Printf("error encountered while trying to inject span: %+v\n", err)
-			}
+		ctx, span, err := traceIntoContext2(req.Context(), tracer, name, req)
+		if err != nil {
+			return req
 		}
+		defer span.Finish()
 
-		return req
+		return req.WithContext(ctx)
 	}
 }
 
 // HandlerFunc is a middleware function for incoming HTTP requests.
 type HandlerFunc func(next http.Handler) http.Handler
 
-// FromHTTPRequest returns a Middleware HandlerFunc that tries to join with an
-// OpenTracing trace found in the HTTP request headers and starts a new Span
-// called `operationName`. If no trace could be found in the HTTP request
-// headers, the Span will be a trace root. The Span is incorporated in the
-// HTTP Context object and can be retrieved with
-// opentracing.SpanFromContext(ctx).
-func FromHTTPRequest(tracer opentracing.Tracer, operationName string,
-) HandlerFunc {
+// HandleHTTPRequest req
+func HandleHTTPRequest(tracer opentracing.Tracer, operationName string) HandlerFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			// Try to join to a trace propagated in `req`.
-			var span opentracing.Span
-			wireContext, err := tracer.Extract(
-				opentracing.TextMap,
-				opentracing.HTTPHeadersCarrier(req.Header),
-			)
+			ctx, span, err := traceIntoContext(req.Context(), tracer, operationName, req)
 			if err != nil {
-				span = tracer.StartSpan(operationName, ext.RPCServerOption(wireContext))
-			} else {
-				span = tracer.StartSpan(operationName, opentracing.ChildOf(wireContext))
+				return
 			}
-
-			// create span
 			defer span.Finish()
 
-			// store span in context
-			ctx := opentracing.ContextWithSpan(req.Context(), span)
+			span.LogEvent("handler")
 
-			// update request context to include our new span
 			req = req.WithContext(ctx)
-
-			// next middleware or actual request handler
 			next.ServeHTTP(w, req)
 		})
+	}
+}
+
+// HandlerHTTPRequestGin gin
+func HandlerHTTPRequestGin(tracer opentracing.Tracer, operationName string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, span, err := traceIntoContext(c.Request.Context(), tracer, operationName, c.Request)
+		if err != nil {
+			return
+		}
+		defer span.Finish()
+
+		span.LogEvent("handler")
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
 	}
 }

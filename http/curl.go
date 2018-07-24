@@ -43,7 +43,7 @@ func NewRequests(tracer opentracing.Tracer) *Requests {
 			},
 			Timeout: time.Duration(timeout) * time.Second,
 		},
-		TraceRequest: ToHTTPRequest(tracer),
+		TraceRequest: CallHTTPRequest(tracer),
 	}
 }
 
