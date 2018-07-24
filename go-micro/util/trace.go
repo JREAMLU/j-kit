@@ -7,6 +7,7 @@ import (
 	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
 
 	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 )
@@ -48,6 +49,8 @@ func NewTrace(serviceName, version string, kafkaAddrs []string, kafkaTopic strin
 		return nil, err
 	}
 
+	opentracing.InitGlobalTracer(tracer)
+
 	return tracer, nil
 }
 
@@ -59,6 +62,27 @@ func TraceLog(ctx context.Context, logger string) {
 	}
 
 	span.LogEvent(logger)
+	span.Finish()
+}
+
+// TraceLogInject inject
+func TraceLogInject(ctx context.Context, operationName string, logger string) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, operationName)
+	if span == nil {
+		return
+	}
+
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		md = make(map[string]string)
+	}
+
+	err := span.Tracer().Inject(span.Context(), opentracing.TextMap, opentracing.TextMapCarrier(md))
+	if err != nil {
+		return
+	}
+
+	span.LogEvent(ext.StringSplice("func(", operationName, ") ", logger))
 	span.Finish()
 }
 
