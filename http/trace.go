@@ -3,15 +3,11 @@ package http
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/openzipkin/zipkin-go-opentracing/thrift/gen-go/zipkincore"
 )
 
 func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
@@ -38,29 +34,9 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 	return ctx, span, nil
 }
 
-// @TODO ChildOf
-func traceIntoContext2(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
+func traceIntoContextCall(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
 	span := opentracing.SpanFromContext(req.Context())
-	ext.SpanKindRPCClient.Set(span)
-
-	// Add some standard OpenTracing tags, useful in an HTTP request.
-	ext.HTTPMethod.Set(span, req.Method)
-	span.SetTag(zipkincore.HTTP_HOST, req.URL.Host)
-	span.SetTag(zipkincore.HTTP_PATH, req.URL.Path)
-	ext.HTTPUrl.Set(
-		span,
-		fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path),
-	)
-
-	// Add information on the peer service we're about to contact.
-	if host, portString, err := net.SplitHostPort(req.URL.Host); err == nil {
-		ext.PeerHostname.Set(span, host)
-		if port, err := strconv.Atoi(portString); err != nil {
-			ext.PeerPort.Set(span, uint16(port))
-		}
-	} else {
-		ext.PeerHostname.Set(span, req.URL.Host)
-	}
+	span = span.Tracer().StartSpan(name, opentracing.ChildOf(span.Context()))
 
 	// Inject the Span context into the outgoing HTTP Request.
 	if err := tracer.Inject(
@@ -68,7 +44,7 @@ func traceIntoContext2(ctx context.Context, tracer opentracing.Tracer, name stri
 		opentracing.TextMap,
 		opentracing.HTTPHeadersCarrier(req.Header),
 	); err != nil {
-		fmt.Printf("error encountered while trying to inject span: %+v\n", err)
+		return nil, nil, err
 	}
 
 	return ctx, span, nil
@@ -82,7 +58,7 @@ func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 	return func(req *http.Request) *http.Request {
 		name := fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
 
-		ctx, span, err := traceIntoContext2(req.Context(), tracer, name, req)
+		ctx, span, err := traceIntoContextCall(req.Context(), tracer, name, req)
 		if err != nil {
 			return req
 		}
