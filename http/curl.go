@@ -3,11 +3,13 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/JREAMLU/j-kit/go-micro/util"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
@@ -73,6 +75,13 @@ func (r *Requests) SetRetryTimes(times int64) {
 	retryTimes = times
 }
 
+type cstring string
+
+const (
+	rawBody cstring = "RawBody"
+	headers cstring = "Header"
+)
+
 //RequestCURL http请求url
 func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string, Header map[string]string, Raw string, data interface{}) (rp Responses, err error) {
 	var i int64
@@ -85,6 +94,7 @@ func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string
 		return rp, err
 	}
 
+	ctx = context.WithValue(context.WithValue(ctx, rawBody, Raw), headers, Header)
 	req = r.TraceRequest(req.WithContext(ctx))
 
 	for hkey, hval := range Header {
@@ -95,15 +105,15 @@ RELOAD:
 
 	resp, err := r.HTTPClient.Do(req)
 	if err != nil {
+		util.TraceLog(req.Context(), fmt.Sprintf("REQUEST ERROR: %v, COUNTER: %v", err, i))
 		i++
 		if i < retryTimes {
 			goto RELOAD
 		}
 		return rp, err
 	}
-	rp.Response = resp
-
 	defer resp.Body.Close()
+	rp.Response = resp
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

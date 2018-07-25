@@ -41,13 +41,13 @@ var (
 	// TargetSRV target srv
 	TargetSRV = "TargetSRV"
 	// FromSRV from srv
-	FromSRV = "FromSRVs"
+	FromSRV = "FromSRV"
 	// Method method
 	Method = "Method"
 	// ContentType contenttype
 	ContentType = "ContentType"
 	// Params params
-	Params = "Paramss"
+	Params = "Params"
 	// Unknow unknow
 	Unknow = "unknow"
 )
