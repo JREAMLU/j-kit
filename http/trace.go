@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/JREAMLU/j-kit/ext"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -82,8 +83,6 @@ func HandlerHTTPRequest(tracer opentracing.Tracer, operationName string) Handler
 			}
 			defer span.Finish()
 
-			span.LogEvent("handler")
-
 			req = req.WithContext(ctx)
 			next.ServeHTTP(w, req)
 		})
@@ -99,7 +98,21 @@ func HandlerHTTPRequestGin(tracer opentracing.Tracer, operationName string) gin.
 		}
 		defer span.Finish()
 
-		span.LogEvent("handler")
+		url := ext.StringSplice(c.Request.Host, c.Request.RequestURI)
+		rawBody, err := c.GetRawData()
+		if err != nil {
+			return
+		}
+
+		span.LogKV(
+			"FromSRV", c.Request.RemoteAddr,
+			"TargetSRV", url,
+			"Method", c.Request.Method,
+			"Proto", c.Request.Proto,
+			"RawBody", string(rawBody),
+			"ContentType", c.GetHeader("Content-Type"),
+		)
+
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}
