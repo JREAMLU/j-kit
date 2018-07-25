@@ -2,13 +2,33 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/JREAMLU/j-kit/ext"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
+)
+
+var (
+	// TargetSRV target srv
+	TargetSRV = "TargetSRV"
+	// FromSRV from srv
+	FromSRV = "FromSRV"
+	// Method method
+	Method = "Method"
+	// Proto proto
+	Proto = "Proto"
+	// RawBody rawbody
+	RawBody = "RawBody"
+	// Header header
+	Header = "Header"
+	// ContentType contenttype
+	ContentType = "ContentType"
+	// Params params
+	Params = "Params"
+	// Unknow unknow
+	Unknow = "unknow"
 )
 
 func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
@@ -57,14 +77,23 @@ type RequestFunc func(req *http.Request) *http.Request
 // CallHTTPRequest to http
 func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 	return func(req *http.Request) *http.Request {
-		name := fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
-
-		ctx, span, err := traceIntoContextCall(req.Context(), tracer, name, req)
+		url := ext.StringSplice(req.URL.Scheme, "://", req.URL.Host, req.URL.Path)
+		ctx, span, err := traceIntoContextCall(req.Context(), tracer, url, req)
 		if err != nil {
 			return req
 		}
 		defer span.Finish()
-		span.LogEvent("call")
+
+		target := ext.StringSplice(req.URL.Scheme, "://", req.URL.Host, req.URL.RequestURI())
+
+		// body
+		span.LogKV(
+			TargetSRV, target,
+			Method, req.Method,
+			Header, req.Context().Value(headers),
+			RawBody, req.Context().Value(rawBody),
+			Proto, req.Proto,
+		)
 
 		return req.WithContext(ctx)
 	}
@@ -105,12 +134,12 @@ func HandlerHTTPRequestGin(tracer opentracing.Tracer, operationName string) gin.
 		}
 
 		span.LogKV(
-			"FromSRV", c.Request.RemoteAddr,
-			"TargetSRV", url,
-			"Method", c.Request.Method,
-			"Proto", c.Request.Proto,
-			"RawBody", string(rawBody),
-			"ContentType", c.GetHeader("Content-Type"),
+			FromSRV, c.Request.RemoteAddr,
+			TargetSRV, url,
+			Method, c.Request.Method,
+			Proto, c.Request.Proto,
+			RawBody, string(rawBody),
+			ContentType, c.GetHeader("Content-Type"),
 		)
 
 		c.Request = c.Request.WithContext(ctx)

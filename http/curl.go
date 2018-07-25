@@ -73,6 +73,13 @@ func (r *Requests) SetRetryTimes(times int64) {
 	retryTimes = times
 }
 
+type cstring string
+
+const (
+	rawBody cstring = "RawBody"
+	headers cstring = "Header"
+)
+
 //RequestCURL http请求url
 func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string, Header map[string]string, Raw string, data interface{}) (rp Responses, err error) {
 	var i int64
@@ -85,6 +92,8 @@ func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string
 		return rp, err
 	}
 
+	ctx = context.WithValue(ctx, rawBody, Raw)
+	ctx = context.WithValue(ctx, headers, Header)
 	req = r.TraceRequest(req.WithContext(ctx))
 
 	for hkey, hval := range Header {
@@ -93,6 +102,7 @@ func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string
 
 RELOAD:
 
+	// TODO resp span
 	resp, err := r.HTTPClient.Do(req)
 	if err != nil {
 		i++
