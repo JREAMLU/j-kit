@@ -87,6 +87,7 @@ func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 			return req
 		}
 		defer span.Finish()
+		span.LogEvent("call")
 
 		return req.WithContext(ctx)
 	}
@@ -95,8 +96,8 @@ func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 // HandlerFunc is a middleware function for incoming HTTP requests.
 type HandlerFunc func(next http.Handler) http.Handler
 
-// HandleHTTPRequest req
-func HandleHTTPRequest(tracer opentracing.Tracer, operationName string) HandlerFunc {
+// HandlerHTTPRequest req
+func HandlerHTTPRequest(tracer opentracing.Tracer, operationName string) HandlerFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span, err := traceIntoContext(req.Context(), tracer, operationName, req)
