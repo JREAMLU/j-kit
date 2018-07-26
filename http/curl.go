@@ -103,7 +103,6 @@ func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string
 
 RELOAD:
 
-	// TODO resp span
 	resp, err := r.HTTPClient.Do(req)
 	if err != nil {
 		util.TraceLog(req.Context(), fmt.Sprintf("REQUEST ERROR: %v, COUNTER: %v", err, i))
