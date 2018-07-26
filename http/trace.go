@@ -87,7 +87,6 @@ func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 
 		target := ext.StringSplice(req.URL.Scheme, "://", req.URL.Host, req.URL.RequestURI())
 
-		// body
 		span.LogKV(
 			TargetSRV, target,
 			Method, req.Method,
