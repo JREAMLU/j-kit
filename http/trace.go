@@ -37,15 +37,28 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 		md = make(map[string]string)
 	}
 
+	s := opentracing.HTTPHeadersCarrier(req.Header)
+	s.ForeachKey(func(key string, val string) error {
+		md[key] = val
+		return nil
+	})
+
 	var span opentracing.Span
-	wireContext, err := tracer.Extract(opentracing.TextMap, opentracing.HTTPHeadersCarrier(req.Header))
+	wireContext, err := tracer.Extract(
+		opentracing.TextMap,
+		opentracing.TextMapCarrier(md),
+	)
 	if err != nil {
 		span = tracer.StartSpan(name)
 	} else {
 		span = tracer.StartSpan(name, opentracing.ChildOf(wireContext))
 	}
 
-	err = span.Tracer().Inject(span.Context(), opentracing.TextMap, opentracing.HTTPHeadersCarrier(req.Header))
+	err = span.Tracer().Inject(
+		span.Context(),
+		opentracing.TextMap,
+		opentracing.TextMapCarrier(md),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -54,6 +67,43 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 	ctx = metadata.NewContext(ctx, md)
 	return ctx, span, nil
 }
+
+// func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
+// 	md, ok := metadata.FromContext(ctx)
+// 	if !ok {
+// 		md = make(map[string]string)
+// 	}
+//
+// 	s := opentracing.HTTPHeadersCarrier(req.Header)
+// 	s.ForeachKey(func(key string, val string) error {
+// 		md[key] = val
+// 		return nil
+// 	})
+//
+// 	var span opentracing.Span
+// 	wireContext, err := tracer.Extract(
+// 		opentracing.TextMap,
+// 		opentracing.HTTPHeadersCarrier(req.Header),
+// 	)
+// 	if err != nil {
+// 		span = tracer.StartSpan(name)
+// 	} else {
+// 		span = tracer.StartSpan(name, opentracing.ChildOf(wireContext))
+// 	}
+//
+// 	err = span.Tracer().Inject(
+// 		span.Context(),
+// 		opentracing.TextMap,
+// 		opentracing.HTTPHeadersCarrier(req.Header),
+// 	)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+//
+// 	ctx = opentracing.ContextWithSpan(ctx, span)
+// 	ctx = metadata.NewContext(ctx, md)
+// 	return ctx, span, nil
+// }
 
 func traceIntoContextCall(ctx context.Context, tracer opentracing.Tracer, name string, req *http.Request) (context.Context, opentracing.Span, error) {
 	span := opentracing.SpanFromContext(req.Context())
