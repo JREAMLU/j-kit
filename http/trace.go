@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/JREAMLU/j-kit/ext"
 	"github.com/gin-gonic/gin"
@@ -39,7 +40,7 @@ func traceIntoContext(ctx context.Context, tracer opentracing.Tracer, name strin
 
 	s := opentracing.HTTPHeadersCarrier(req.Header)
 	s.ForeachKey(func(key string, val string) error {
-		md[key] = val
+		md[strings.ToLower(key)] = val
 		return nil
 	})
 
