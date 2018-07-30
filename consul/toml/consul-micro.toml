@@ -1,0 +1,13 @@
+[service]
+Name = "go.micro.srv.pusher"
+Version = "v1"
+RegisterTTL = 1
+RegisterInterval = 1
+
+[web]
+Host = "0.0.0.0"
+Port = 8012
+
+[pusher]
+auth = true
+secret = "abc"
