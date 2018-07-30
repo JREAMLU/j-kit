@@ -22,12 +22,23 @@ type PusherConfig struct {
 }
 
 func TestLoadConfig(t *testing.T) {
-	Convey("new elastic test", t, func() {
-		key := getServiceKey(serviceName, serviceVersion)
-		var conf PusherConfig
-		err := loadConfig(consulAddr, key, &conf)
+	Convey("Load Config test", t, func() {
+		config, err := LoadConfig(consulAddr, serviceName, serviceVersion)
+		So(err, ShouldBeNil)
+		So(config, ShouldNotBeNil)
 		t.Log(err)
-		t.Log(conf.Config)
-		t.Log(conf.Pusher)
+		t.Log(config)
+	})
+}
+
+func TestLoadCustomConfig(t *testing.T) {
+	Convey("Load Custom Config test", t, func() {
+		var config PusherConfig
+		err := LoadCustomConfig(consulAddr, serviceName, serviceVersion, &config)
+		So(err, ShouldBeNil)
+		So(config, ShouldNotBeNil)
+		t.Log(err)
+		t.Log(config.Config)
+		t.Log(config.Pusher)
 	})
 }
