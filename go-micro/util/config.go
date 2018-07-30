@@ -22,6 +22,16 @@ type Config struct {
 		Host string
 		Port int
 	}
+
+	Kafka struct {
+		ZipkinBroker  []string
+		BigdataBroker []string
+	}
+
+	Zookeeper struct {
+		BigdataAddrs  []string
+		BigdataZkroot string
+	}
 }
 
 const (
@@ -68,7 +78,7 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	}
 
 	if config != nil {
-		// do something
+		// @TODO kafka zookeeper
 	}
 
 	return nil
