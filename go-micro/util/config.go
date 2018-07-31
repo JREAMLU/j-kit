@@ -90,7 +90,7 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	}
 
 	if config != nil {
-		config.Kafka.ZipkinBroker, err = client.GetKafkas(_zipkin)
+		config.Kafka.ZipkinBroker, config.Kafka.ZipkinTopic, err = client.GetKafkas(_zipkin)
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,9 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 			return err
 		}
 
-		config.Kafka.ZipkinTopic = zipkinTopic
+		if config.Kafka.ZipkinTopic == "" {
+			config.Kafka.ZipkinTopic = zipkinTopic
+		}
 
 		config.Consul.RegistryAddrs, err = client.GetConsulAddrs(_consul)
 		if err != nil {
@@ -115,6 +117,11 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	if config.Service.RegisterTTL == 0 {
 		config.Service.RegisterTTL = 1
 	}
+
+	log.Printf("Zipkin Broker: %v", config.Kafka.ZipkinBroker)
+	log.Printf("Zipkin Topic: %v", config.Kafka.ZipkinTopic)
+	log.Printf("Service RegisterInterval: %v", config.Service.RegisterInterval)
+	log.Printf("Service RegisterTTL: %v", config.Service.RegisterTTL)
 
 	return nil
 }

@@ -35,6 +35,7 @@ var (
 // KafkaBrokers brokers
 type KafkaBrokers struct {
 	Brokers []string
+	Topic   string
 }
 
 // KafkaZookeeper zookeeper zkroot
@@ -49,22 +50,22 @@ type RegistryConsul struct {
 }
 
 // GetKafkas get kafka addrs
-func (client *Client) GetKafkas(clusterName string) ([]string, error) {
+func (client *Client) GetKafkas(clusterName string) ([]string, string, error) {
 	key := path.Join(Kafka, clusterName)
 	buf, err := client.Get(key)
 	var brokers KafkaBrokers
 	if err != nil {
-		return nil, err
+		return nil, constant.EmptyStr, err
 	}
 
 	log.Printf("Load Kafka Config: %v \n%v\n%v\n%v\n\n", key, SeparatorStart, buf, SeparatorEnd)
 
 	_, err = toml.Decode(buf, &brokers)
 	if err != nil {
-		return nil, err
+		return nil, constant.EmptyStr, err
 	}
 
-	return brokers.Brokers, nil
+	return brokers.Brokers, brokers.Topic, nil
 }
 
 // GetZookeepers get zookeeper addrs
