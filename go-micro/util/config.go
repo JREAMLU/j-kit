@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/BurntSushi/toml"
-	"github.com/JREAMLU/core/consul"
+	"github.com/JREAMLU/j-kit/consul"
 	"github.com/JREAMLU/j-kit/ext"
 )
 
@@ -36,6 +36,8 @@ type Config struct {
 
 const (
 	serviceGo = "service/go/"
+	_zipkin   = "zipkin"
+	_bigdata  = "bigdata"
 )
 
 // LoadConfig load service config
@@ -78,7 +80,15 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	}
 
 	if config != nil {
-		// @TODO kafka zookeeper
+		config.Kafka.ZipkinBroker, err = client.GetKafkas(_zipkin)
+		if err != nil {
+			return err
+		}
+
+		config.Zookeeper.BigdataAddrs, config.Zookeeper.BigdataZkroot, err = client.GetZookeepers(_bigdata)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
