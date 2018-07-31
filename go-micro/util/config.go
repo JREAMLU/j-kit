@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"log"
 	"reflect"
 
 	"github.com/BurntSushi/toml"
@@ -33,12 +34,17 @@ type Config struct {
 		BigdataAddrs  []string
 		BigdataZkroot string
 	}
+
+	Consul struct {
+		RegistryAddrs []string
+	}
 }
 
 const (
 	serviceGo   = "service/go/"
 	_zipkin     = "zipkin"
 	_bigdata    = "bigdata"
+	_consul     = "registry"
 	zipkinTopic = "zipkin"
 )
 
@@ -63,6 +69,8 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Load Config: %v \n%v\n%v\n%v\n\n", key, consul.SeparatorStart, buf, consul.SeparatorEnd)
 
 	_, err = toml.Decode(buf, sc)
 	if err != nil {
@@ -93,6 +101,11 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 		}
 
 		config.Kafka.ZipkinTopic = zipkinTopic
+
+		config.Consul.RegistryAddrs, err = client.GetConsulAddrs(_consul)
+		if err != nil {
+			return err
+		}
 	}
 
 	if config.Service.RegisterInterval == 0 {

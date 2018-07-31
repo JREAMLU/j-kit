@@ -2,6 +2,7 @@ package consul
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"path"
 	"strconv"
@@ -34,6 +35,8 @@ func NewClient(opts ...ClientOptionFunc) (*Client, error) {
 	for _, opt := range opts {
 		opt(client)
 	}
+
+	log.Printf("Config Consul Addrs: %v\n", client.config.Address)
 
 	consulClient, err := api.NewClient(client.config)
 	if err != nil {
