@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"reflect"
 
@@ -22,6 +23,7 @@ type Config struct {
 	Web struct {
 		Host string
 		Port int
+		URL  string
 	}
 
 	Kafka struct {
@@ -116,6 +118,10 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 
 	if config.Service.RegisterTTL == 0 {
 		config.Service.RegisterTTL = 1
+	}
+
+	if config.Web.URL == "" {
+		config.Web.URL = fmt.Sprintf("%v:%v", config.Web.Host, config.Web.Port)
 	}
 
 	log.Printf("Zipkin Broker: %v", config.Kafka.ZipkinBroker)

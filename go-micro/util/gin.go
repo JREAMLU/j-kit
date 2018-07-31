@@ -3,9 +3,8 @@ package util
 import (
 	"log"
 	"os"
-	"time"
 
-	"github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
+	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
 
 	"github.com/hashicorp/consul/api"
 	micro "github.com/micro/go-micro"
@@ -14,11 +13,11 @@ import (
 	register "github.com/micro/go-plugins/registry/consul"
 	server "github.com/micro/go-plugins/server/grpc"
 	transport "github.com/micro/go-plugins/transport/grpc"
-	// brokerKafka "github.com/micro/go-plugins/broker/kafka"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
-// NewMicroService new micro service
-func NewMicroService(config *Config) micro.Service {
+// NewHTTPService new http service
+func NewHTTPService(config *Config) (micro.Service, opentracing.Tracer) {
 	t, err := NewTrace(
 		config.Service.Name,
 		config.Service.Version,
@@ -43,21 +42,9 @@ func NewMicroService(config *Config) micro.Service {
 			}),
 		)),
 		micro.Transport(transport.NewTransport()),
-		micro.Name(config.Service.Name),
-		micro.Version(config.Service.Version),
-		micro.WrapClient(opentracing.NewClientWrapper(t)),
-		micro.WrapHandler(opentracing.NewHandlerWrapper(t)),
-		// micro.Broker(brokerKafka.NewBroker(
-		// 	broker.Option(func(opt *broker.Options) {
-		// 		opt.Addrs = []string{"10.200.119.128:9092"}
-		// 	}),
-		// )),
+		micro.WrapClient(jopentracing.NewClientWrapper(t)),
+		micro.WrapHandler(jopentracing.NewHandlerWrapper(t)),
 	)
 
-	service.Init(
-		micro.RegisterTTL(time.Duration(config.Service.RegisterTTL)*time.Second),
-		micro.RegisterInterval(time.Duration(config.Service.RegisterInterval)*time.Second),
-	)
-
-	return service
+	return service, t
 }
