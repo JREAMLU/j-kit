@@ -14,8 +14,13 @@ import (
 )
 
 // NewMicroService new micro service
-func NewMicroService() micro.Service {
-	t, err := NewTrace("go.micro.srv.s1", "v1", []string{"10.200.119.128:9092", "10.200.119.129:9092", "10.200.119.130:9092"}, "web_log_get")
+func NewMicroService(config *Config) micro.Service {
+	t, err := NewTrace(
+		config.Service.Name,
+		config.Service.Version,
+		config.Kafka.ZipkinBroker,
+		config.Kafka.ZipkinTopic,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -25,8 +30,8 @@ func NewMicroService() micro.Service {
 		micro.Server(serverGrpc.NewServer()),
 		micro.Registry(registerConsul.NewRegistry()),
 		micro.Transport(transportGrpc.NewTransport()),
-		micro.Name("go.micro.srv.s1"),
-		micro.Version("v1"),
+		micro.Name(config.Service.Name),
+		micro.Version(config.Service.Version),
 		micro.WrapClient(opentracing.NewClientWrapper(t)),
 		micro.WrapHandler(opentracing.NewHandlerWrapper(t)),
 		// micro.Broker(brokerKafka.NewBroker(
@@ -37,8 +42,8 @@ func NewMicroService() micro.Service {
 	)
 
 	service.Init(
-		micro.RegisterTTL(1*time.Second),
-		micro.RegisterInterval(1*time.Second),
+		micro.RegisterTTL(time.Duration(config.Service.RegisterTTL)*time.Second),
+		micro.RegisterInterval(time.Duration(config.Service.RegisterInterval)*time.Second),
 	)
 
 	return service

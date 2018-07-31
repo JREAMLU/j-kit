@@ -25,6 +25,7 @@ type Config struct {
 
 	Kafka struct {
 		ZipkinBroker  []string
+		ZipkinTopic   string
 		BigdataBroker []string
 	}
 
@@ -35,9 +36,10 @@ type Config struct {
 }
 
 const (
-	serviceGo = "service/go/"
-	_zipkin   = "zipkin"
-	_bigdata  = "bigdata"
+	serviceGo   = "service/go/"
+	_zipkin     = "zipkin"
+	_bigdata    = "bigdata"
+	zipkinTopic = "zipkin"
 )
 
 // LoadConfig load service config
@@ -89,6 +91,16 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 		if err != nil {
 			return err
 		}
+
+		config.Kafka.ZipkinTopic = zipkinTopic
+	}
+
+	if config.Service.RegisterInterval == 0 {
+		config.Service.RegisterInterval = 1
+	}
+
+	if config.Service.RegisterTTL == 0 {
+		config.Service.RegisterTTL = 1
 	}
 
 	return nil
