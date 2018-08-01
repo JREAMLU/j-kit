@@ -1,11 +1,13 @@
-package util
+package http
 
 import (
 	"log"
 	"os"
 
 	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
+	"github.com/JREAMLU/j-kit/go-micro/util"
 
+	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/consul/api"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/registry"
@@ -17,8 +19,8 @@ import (
 )
 
 // NewHTTPService new http service
-func NewHTTPService(config *Config) (micro.Service, opentracing.Tracer) {
-	t, err := NewTrace(
+func NewHTTPService(config *util.Config) (micro.Service, *gin.Engine, opentracing.Tracer) {
+	t, err := util.NewTrace(
 		config.Service.Name,
 		config.Service.Version,
 		config.Kafka.ZipkinBroker,
@@ -46,5 +48,11 @@ func NewHTTPService(config *Config) (micro.Service, opentracing.Tracer) {
 		micro.WrapHandler(jopentracing.NewHandlerWrapper(t)),
 	)
 
-	return service, t
+	g := gin.New()
+	g.Use(
+		gin.Recovery(),
+		HandlerHTTPRequestGin(t, config.Service.Name),
+	)
+
+	return service, g, t
 }
