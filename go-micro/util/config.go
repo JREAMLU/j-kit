@@ -128,6 +128,9 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	log.Printf("Zipkin Topic: %v", config.Kafka.ZipkinTopic)
 	log.Printf("Service RegisterInterval: %v", config.Service.RegisterInterval)
 	log.Printf("Service RegisterTTL: %v", config.Service.RegisterTTL)
+	if config.Web.Port != 0 {
+		log.Printf("Web Host: %v Port: %v", config.Web.Host, config.Web.Port)
+	}
 
 	return nil
 }
