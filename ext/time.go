@@ -25,6 +25,24 @@ func CurrHour() time.Time {
 	return time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
 }
 
+// CurrMinute minute
+func CurrMinute() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location())
+}
+
+// CurrSecond second
+func CurrSecond() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, now.Location())
+}
+
+// CurrNanoSecond nanosecond
+func CurrNanoSecond() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Nanosecond(), now.Location())
+}
+
 // Formatyymmdd yymmdd
 func Formatyymmdd(date time.Time) string {
 	return date.Format(TimeFormatyymmdd)
