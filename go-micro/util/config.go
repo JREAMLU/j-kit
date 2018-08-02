@@ -43,11 +43,13 @@ type Config struct {
 }
 
 const (
-	serviceGo   = "service/go/"
-	_zipkin     = "zipkin"
-	_bigdata    = "bigdata"
-	_consul     = "registry"
-	zipkinTopic = "zipkin"
+	serviceGo               = "service/go/"
+	_zipkin                 = "zipkin"
+	_bigdata                = "bigdata"
+	_consul                 = "registry"
+	zipkinTopic             = "zipkin"
+	defaultRegisterInterval = 20
+	defaultRegisterTTL      = 30
 )
 
 // LoadConfig load service config
@@ -113,11 +115,11 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	}
 
 	if config.Service.RegisterInterval == 0 {
-		config.Service.RegisterInterval = 1
+		config.Service.RegisterInterval = defaultRegisterInterval
 	}
 
 	if config.Service.RegisterTTL == 0 {
-		config.Service.RegisterTTL = 1
+		config.Service.RegisterTTL = defaultRegisterTTL
 	}
 
 	if config.Web.URL == "" {

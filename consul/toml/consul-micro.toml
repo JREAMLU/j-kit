@@ -1,8 +1,8 @@
 [service]
 Name = "go.micro.srv.pusher"
 Version = "v1"
-RegisterTTL = 1
-RegisterInterval = 1
+RegisterTTL = 30
+RegisterInterval = 20
 
 [web]
 Host = "0.0.0.0"
