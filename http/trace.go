@@ -3,9 +3,12 @@ package http
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/JREAMLU/j-kit/ext"
+	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
+
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -129,11 +132,23 @@ type RequestFunc func(req *http.Request) *http.Request
 // CallHTTPRequest to http
 func CallHTTPRequest(tracer opentracing.Tracer) RequestFunc {
 	return func(req *http.Request) *http.Request {
+		// add header toggle
+		if md, ok := metadata.FromContext(req.Context()); ok {
+			req.Header.Add(jopentracing.ZipkinToggle, md[jopentracing.ZipkinToggle])
+		}
+
 		url := ext.StringSplice(req.URL.Scheme, "://", req.URL.Host, req.URL.Path)
 		ctx, span, err := traceIntoContextCall(req.Context(), tracer, url, req)
 		if err != nil {
 			return req
 		}
+
+		// toggle
+		i, err := strconv.Atoi(req.Header.Get(jopentracing.ZipkinToggle))
+		if err != nil || i <= 0 {
+			return req
+		}
+
 		defer span.Finish()
 
 		target := ext.StringSplice(req.URL.Scheme, "://", req.URL.Host, req.URL.RequestURI())
@@ -176,11 +191,22 @@ func HandlerHTTPRequestGin(tracer opentracing.Tracer, operationName string) gin.
 		if err != nil {
 			return
 		}
+
+		// toggle
+		i, err := strconv.ParseInt(c.Request.Header.Get(jopentracing.ZipkinToggle), 10, 64)
+		if err != nil || i <= 0 {
+			c.Request = c.Request.WithContext(ctx)
+			c.Next()
+			return
+		}
+
 		defer span.Finish()
 
 		url := ext.StringSplice(c.Request.Host, c.Request.RequestURI)
 		rawBody, err := c.GetRawData()
 		if err != nil {
+			c.Request = c.Request.WithContext(ctx)
+			c.Next()
 			return
 		}
 

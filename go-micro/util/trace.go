@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/JREAMLU/j-kit/ext"
 	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
@@ -56,6 +57,14 @@ func NewTrace(serviceName, version string, kafkaAddrs []string, kafkaTopic strin
 
 // TraceLog log
 func TraceLog(ctx context.Context, logger string) {
+	// toggle
+	if md, ok := metadata.FromContext(ctx); ok {
+		i, err := strconv.Atoi(md[jopentracing.ZipkinToggle])
+		if err != nil || i <= 0 {
+			return
+		}
+	}
+
 	span := opentracing.SpanFromContext(ctx)
 	if span == nil {
 		return
@@ -67,6 +76,14 @@ func TraceLog(ctx context.Context, logger string) {
 
 // TraceLogInject inject
 func TraceLogInject(ctx context.Context, operationName string, logger string) {
+	// toggle
+	if md, ok := metadata.FromContext(ctx); ok {
+		i, err := strconv.Atoi(md[jopentracing.ZipkinToggle])
+		if err != nil || i <= 0 {
+			return
+		}
+	}
+
 	span, ctx := opentracing.StartSpanFromContext(ctx, operationName)
 	if span == nil {
 		return

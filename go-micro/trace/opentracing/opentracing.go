@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/JREAMLU/j-kit/ext"
@@ -38,6 +39,8 @@ const (
 	ZipkinSampled = prefixTracerState + "sampled"
 	// ZipkinFlags zipkinflags
 	ZipkinFlags = prefixTracerState + "flags"
+	// ZipkinToggle zipkintoggle
+	ZipkinToggle = prefixTracerState + "toggle"
 )
 
 var (
@@ -88,6 +91,21 @@ func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{
 	if err != nil {
 		return err
 	}
+
+	// toggle
+	if md, ok := metadata.FromContext(ctx); ok {
+		var ti int
+		ti, err = strconv.Atoi(md[ZipkinToggle])
+		if err != nil || ti <= 0 {
+			err = o.Client.Call(ctx, req, rsp, opts...)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+	}
+
 	defer span.Finish()
 
 	r := req.Request()
@@ -158,8 +176,17 @@ func NewHandlerWrapper(ot opentracing.Tracer) server.HandlerWrapper {
 			name := fmt.Sprintf("%s.%s", req.Service(), req.Method())
 			ctx, span, err := traceIntoContext(ctx, ot, name)
 			if err != nil {
-				return err
+				return h(ctx, req, rsp)
 			}
+
+			// toggle
+			if md, ok := metadata.FromContext(ctx); ok {
+				i, err := strconv.Atoi(md[ZipkinToggle])
+				if err != nil || i <= 0 {
+					return h(ctx, req, rsp)
+				}
+			}
+
 			defer span.Finish()
 
 			fromService := Unknow
