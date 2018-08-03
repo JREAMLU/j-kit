@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	middleware "github.com/JREAMLU/j-kit/go-micro/gin-middleware"
 	jopentracing "github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
 	"github.com/JREAMLU/j-kit/go-micro/util"
 
@@ -52,6 +53,7 @@ func NewHTTPService(config *util.Config) (micro.Service, *gin.Engine, opentracin
 	g.Use(
 		gin.Recovery(),
 		HandlerHTTPRequestGin(t, config.Service.Name),
+		middleware.HeaderTraceRespone(),
 	)
 
 	return service, g, t

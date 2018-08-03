@@ -26,12 +26,18 @@ const (
 	prefixTracerState = "x-b3-" // we default to interop with non-opentracing zipkin tracers
 	prefixBaggage     = "ot-baggage-"
 
-	tracerStateFieldCount = 3 // not 5, X-B3-ParentSpanId is optional and we allow optional Sampled header
-	zipkinTraceID         = prefixTracerState + "traceid"
-	zipkinSpanID          = prefixTracerState + "spanid"
-	zipkinParentSpanID    = prefixTracerState + "parentspanid"
-	zipkinSampled         = prefixTracerState + "sampled"
-	zipkinFlags           = prefixTracerState + "flags"
+	// TracerStateFieldCount tracerstatefieldcount
+	TracerStateFieldCount = 3 // not 5, X-B3-ParentSpanId is optional and we allow optional Sampled header
+	// ZipkinTraceID zipkintraceid
+	ZipkinTraceID = prefixTracerState + "traceid"
+	// ZipkinSpanID zipkinspanid
+	ZipkinSpanID = prefixTracerState + "spanid"
+	// ZipkinParentSpanID zipkinparentspanid
+	ZipkinParentSpanID = prefixTracerState + "parentspanid"
+	// ZipkinSampled zipkinsampled
+	ZipkinSampled = prefixTracerState + "sampled"
+	// ZipkinFlags zipkinflags
+	ZipkinFlags = prefixTracerState + "flags"
 )
 
 var (
