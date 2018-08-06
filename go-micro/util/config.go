@@ -139,22 +139,27 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 
 	// circuit Breaker
 	if config.CircuitBreaker.MaxRequests == 0 {
+		// when StateHalfOpen, allow how many requests try in
 		config.CircuitBreaker.MaxRequests = 100
 	}
 
 	if config.CircuitBreaker.FailureRatio == 0 {
+		// failure ratio
 		config.CircuitBreaker.FailureRatio = 0.6
 	}
 
 	if config.CircuitBreaker.Interval == 0 {
+		// when StateClosed, after every interval time, clean Counts.Requests (failure requests)
 		config.CircuitBreaker.Interval = 30
 	}
 
 	if config.CircuitBreaker.Timeout == 0 {
+		// when StateOpen, after every timeout, change to StateHalfOpen
 		config.CircuitBreaker.Timeout = 90
 	}
 
 	if config.CircuitBreaker.CountsRequests == 0 {
+		// failure requests
 		config.CircuitBreaker.CountsRequests = 1000
 	}
 
