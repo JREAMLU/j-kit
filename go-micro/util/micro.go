@@ -9,11 +9,14 @@ import (
 
 	"github.com/hashicorp/consul/api"
 	micro "github.com/micro/go-micro"
+	microClient "github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/registry"
 	client "github.com/micro/go-plugins/client/grpc"
 	register "github.com/micro/go-plugins/registry/consul"
 	server "github.com/micro/go-plugins/server/grpc"
 	transport "github.com/micro/go-plugins/transport/grpc"
+	microGobreaker "github.com/micro/go-plugins/wrapper/breaker/gobreaker"
+	"github.com/sony/gobreaker"
 	// brokerKafka "github.com/micro/go-plugins/broker/kafka"
 )
 
@@ -30,7 +33,22 @@ func NewMicroService(config *Config) micro.Service {
 	}
 
 	service := micro.NewService(
-		micro.Client(client.NewClient()),
+		micro.Client(client.NewClient(
+			microClient.Wrap(microGobreaker.NewClientWrapper(
+				gobreaker.NewCircuitBreaker(gobreaker.Settings{
+					Name:        config.Service.Name,
+					MaxRequests: config.CircuitBreaker.MaxRequests,
+					Interval:    time.Duration(config.CircuitBreaker.Interval) * time.Second,
+					Timeout:     time.Duration(config.CircuitBreaker.Timeout) * time.Second,
+					ReadyToTrip: func(counts gobreaker.Counts) bool {
+						failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+						return counts.Requests >= config.CircuitBreaker.CountsRequests && failureRatio >= config.CircuitBreaker.FailureRatio
+					},
+					OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+					},
+				}),
+			)),
+		)),
 		micro.Server(server.NewServer()),
 		micro.Registry(register.NewRegistry(
 			registry.Option(func(opts *registry.Options) {

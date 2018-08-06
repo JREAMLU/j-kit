@@ -26,6 +26,14 @@ type Config struct {
 		URL  string
 	}
 
+	CircuitBreaker struct {
+		MaxRequests    uint32
+		Interval       int
+		Timeout        int
+		CountsRequests uint32
+		FailureRatio   float64
+	}
+
 	Kafka struct {
 		ZipkinBroker  []string
 		ZipkinTopic   string
@@ -93,6 +101,7 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 		}
 	}
 
+	// kafka zookeeper
 	if config != nil {
 		config.Kafka.ZipkinBroker, config.Kafka.ZipkinTopic, err = client.GetKafkas(_zipkin)
 		if err != nil {
@@ -114,6 +123,7 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 		}
 	}
 
+	// micro
 	if config.Service.RegisterInterval == 0 {
 		config.Service.RegisterInterval = defaultRegisterInterval
 	}
@@ -122,8 +132,30 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 		config.Service.RegisterTTL = defaultRegisterTTL
 	}
 
+	// http server
 	if config.Web.URL == "" {
 		config.Web.URL = fmt.Sprintf("%v:%v", config.Web.Host, config.Web.Port)
+	}
+
+	// circuit Breaker
+	if config.CircuitBreaker.MaxRequests == 0 {
+		config.CircuitBreaker.MaxRequests = 100
+	}
+
+	if config.CircuitBreaker.FailureRatio == 0 {
+		config.CircuitBreaker.FailureRatio = 0.6
+	}
+
+	if config.CircuitBreaker.Interval == 0 {
+		config.CircuitBreaker.Interval = 30
+	}
+
+	if config.CircuitBreaker.Timeout == 0 {
+		config.CircuitBreaker.Timeout = 90
+	}
+
+	if config.CircuitBreaker.CountsRequests == 0 {
+		config.CircuitBreaker.CountsRequests = 1000
 	}
 
 	log.Printf("Zipkin Broker: %v", config.Kafka.ZipkinBroker)
@@ -133,6 +165,11 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	if config.Web.Port != 0 {
 		log.Printf("Web Host: %v Port: %v", config.Web.Host, config.Web.Port)
 	}
+	log.Printf("CircuitBreaker MaxRequests: %v", config.CircuitBreaker.MaxRequests)
+	log.Printf("CircuitBreaker FailureRatio: %v", config.CircuitBreaker.FailureRatio)
+	log.Printf("CircuitBreaker Interval: %v", config.CircuitBreaker.Interval)
+	log.Printf("CircuitBreaker Timeout: %v", config.CircuitBreaker.Timeout)
+	log.Printf("CircuitBreaker CountsRequests: %v", config.CircuitBreaker.CountsRequests)
 
 	return nil
 }
