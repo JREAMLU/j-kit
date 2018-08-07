@@ -40,7 +40,7 @@ type Config struct {
 	}
 
 	RateLimit struct {
-		// every time to gvie bucket
+		// gvie bucket rate time (every time give bucket nums)
 		ClientRate float64
 		// total bucket
 		ClientCapacity int64
