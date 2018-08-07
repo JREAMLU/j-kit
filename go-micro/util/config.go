@@ -27,11 +27,27 @@ type Config struct {
 	}
 
 	CircuitBreaker struct {
-		MaxRequests    uint32
-		Interval       int
-		Timeout        int
+		// when StateHalfOpen, allow how many requests try in
+		MaxRequests uint32
+		// when StateClosed, after every interval time, clean Counts.Requests (failure requests)
+		Interval int
+		// when StateOpen, after every timeout, change to StateHalfOpen
+		Timeout int
+		// failure requests
 		CountsRequests uint32
-		FailureRatio   float64
+		// failure ratio
+		FailureRatio float64
+	}
+
+	RateLimit struct {
+		// every time to gvie bucket
+		ClientRate float64
+		// total bucket
+		ClientCapacity int64
+		ClientWait     bool
+		ServerRate     float64
+		ServerCapacity int64
+		ServerWait     bool
 	}
 
 	Kafka struct {
@@ -139,42 +155,63 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 
 	// circuit Breaker
 	if config.CircuitBreaker.MaxRequests == 0 {
-		// when StateHalfOpen, allow how many requests try in
 		config.CircuitBreaker.MaxRequests = 100
 	}
 
 	if config.CircuitBreaker.FailureRatio == 0 {
-		// failure ratio
 		config.CircuitBreaker.FailureRatio = 0.6
 	}
 
 	if config.CircuitBreaker.Interval == 0 {
-		// when StateClosed, after every interval time, clean Counts.Requests (failure requests)
 		config.CircuitBreaker.Interval = 30
 	}
 
 	if config.CircuitBreaker.Timeout == 0 {
-		// when StateOpen, after every timeout, change to StateHalfOpen
 		config.CircuitBreaker.Timeout = 90
 	}
 
 	if config.CircuitBreaker.CountsRequests == 0 {
-		// failure requests
 		config.CircuitBreaker.CountsRequests = 1000
+	}
+
+	if config.RateLimit.ClientRate == 0 {
+		config.RateLimit.ClientRate = 2000
+	}
+
+	if config.RateLimit.ClientCapacity == 0 {
+		config.RateLimit.ClientCapacity = 10000
+	}
+
+	if config.RateLimit.ServerRate == 0 {
+		config.RateLimit.ServerRate = 2000
+	}
+
+	if config.RateLimit.ServerCapacity == 0 {
+		config.RateLimit.ServerCapacity = 10000
 	}
 
 	log.Printf("Zipkin Broker: %v", config.Kafka.ZipkinBroker)
 	log.Printf("Zipkin Topic: %v", config.Kafka.ZipkinTopic)
+
 	log.Printf("Service RegisterInterval: %v", config.Service.RegisterInterval)
 	log.Printf("Service RegisterTTL: %v", config.Service.RegisterTTL)
+
 	if config.Web.Port != 0 {
 		log.Printf("Web Host: %v Port: %v", config.Web.Host, config.Web.Port)
 	}
+
 	log.Printf("CircuitBreaker MaxRequests: %v", config.CircuitBreaker.MaxRequests)
 	log.Printf("CircuitBreaker FailureRatio: %v", config.CircuitBreaker.FailureRatio)
 	log.Printf("CircuitBreaker Interval: %v", config.CircuitBreaker.Interval)
 	log.Printf("CircuitBreaker Timeout: %v", config.CircuitBreaker.Timeout)
 	log.Printf("CircuitBreaker CountsRequests: %v", config.CircuitBreaker.CountsRequests)
+
+	log.Printf("RateLimit ClientRate: %v", config.RateLimit.ClientRate)
+	log.Printf("RateLimit ClientCapacity: %v", config.RateLimit.ClientCapacity)
+	log.Printf("RateLimit ClientWait: %v", config.RateLimit.ClientWait)
+	log.Printf("RateLimit ServerRate: %v", config.RateLimit.ServerRate)
+	log.Printf("RateLimit ServerCapacity: %v", config.RateLimit.ServerCapacity)
+	log.Printf("RateLimit ServerWait: %v", config.RateLimit.ServerWait)
 
 	return nil
 }

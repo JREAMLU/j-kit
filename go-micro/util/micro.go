@@ -6,16 +6,19 @@ import (
 	"time"
 
 	"github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
+	"github.com/juju/ratelimit"
 
 	"github.com/hashicorp/consul/api"
 	micro "github.com/micro/go-micro"
 	microClient "github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/registry"
+	microServer "github.com/micro/go-micro/server"
 	client "github.com/micro/go-plugins/client/grpc"
 	register "github.com/micro/go-plugins/registry/consul"
 	server "github.com/micro/go-plugins/server/grpc"
 	transport "github.com/micro/go-plugins/transport/grpc"
 	microGobreaker "github.com/micro/go-plugins/wrapper/breaker/gobreaker"
+	microRatelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit"
 	"github.com/sony/gobreaker"
 	// brokerKafka "github.com/micro/go-plugins/broker/kafka"
 )
@@ -31,6 +34,9 @@ func NewMicroService(config *Config) micro.Service {
 	if err != nil {
 		panic(err)
 	}
+
+	clientBucket := ratelimit.NewBucketWithRate(config.RateLimit.ClientRate, config.RateLimit.ClientCapacity)
+	serverBucket := ratelimit.NewBucketWithRate(config.RateLimit.ServerRate, config.RateLimit.ServerCapacity)
 
 	service := micro.NewService(
 		micro.Client(client.NewClient(
@@ -48,8 +54,11 @@ func NewMicroService(config *Config) micro.Service {
 					},
 				}),
 			)),
+			microClient.Wrap(microRatelimit.NewClientWrapper(clientBucket, config.RateLimit.ClientWait)),
 		)),
-		micro.Server(server.NewServer()),
+		micro.Server(server.NewServer(
+			microServer.WrapHandler(microRatelimit.NewHandlerWrapper(serverBucket, config.RateLimit.ServerWait)),
+		)),
 		micro.Registry(register.NewRegistry(
 			registry.Option(func(opts *registry.Options) {
 				if len(config.Consul.RegistryAddrs) > 0 {
