@@ -15,3 +15,11 @@ secret = "abc"
 [circuitBreaker]
 MaxRequests = 2
 CountsRequests = 6
+
+[rateLimit]
+ClientRate = 2000.0
+ClientCapacity = 10000
+ClientWait = false
+ServerRate = 2000.0
+ServerCapacity = 10000
+ServerWait = false
