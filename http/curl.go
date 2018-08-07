@@ -11,12 +11,14 @@ import (
 
 	"github.com/JREAMLU/j-kit/go-micro/util"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/sony/gobreaker"
 )
 
 // Requests struct
 type Requests struct {
 	HTTPClient   *http.Client
 	TraceRequest RequestFunc
+	Cb           *gobreaker.CircuitBreaker
 }
 
 // Responses struct
@@ -33,6 +35,13 @@ var (
 	maxConnectionIdleTime       = 60 * time.Second
 	timeout               int64 = 3
 	retryTimes            int64 = 1
+
+	cbName                  = "http"
+	cbMaxRequests    uint32 = 100
+	cbInterval              = 30
+	cbTimeout               = 90
+	cbCountsRequests uint32 = 1000
+	cbFailureRatio          = 0.6
 )
 
 // NewRequests new requests
@@ -46,7 +55,23 @@ func NewRequests(tracer opentracing.Tracer) *Requests {
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 		TraceRequest: CallHTTPRequest(tracer),
+		Cb:           defaultCircuitBreakerSetting(),
 	}
+}
+
+func defaultCircuitBreakerSetting() *gobreaker.CircuitBreaker {
+	return gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		Name:        cbName,
+		MaxRequests: cbMaxRequests,
+		Interval:    time.Duration(cbInterval) * time.Second,
+		Timeout:     time.Duration(cbTimeout) * time.Second,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+			return counts.Requests >= cbCountsRequests && failureRatio >= cbFailureRatio
+		},
+		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+		},
+	})
 }
 
 // SetTimeout http client timeout
@@ -82,7 +107,19 @@ const (
 	headers cstring = "Header"
 )
 
-//RequestCURL http请求url
+// CbRequestCURL CircuitBreaker curl
+func (r *Requests) CbRequestCURL(ctx context.Context, Method string, URLStr string, Header map[string]string, Raw string, data interface{}) (rp Responses, err error) {
+	res, err := r.Cb.Execute(func() (interface{}, error) {
+		return r.RequestCURL(ctx, Method, URLStr, Header, Raw, data)
+	})
+	if err != nil {
+		return rp, err
+	}
+
+	return res.(Responses), nil
+}
+
+//RequestCURL http url
 func (r *Requests) RequestCURL(ctx context.Context, Method string, URLStr string, Header map[string]string, Raw string, data interface{}) (rp Responses, err error) {
 	var i int64
 	req, err := http.NewRequest(
