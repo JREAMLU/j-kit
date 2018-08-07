@@ -11,3 +11,7 @@ Port = 8012
 [pusher]
 auth = true
 secret = "abc"
+
+[circuitBreaker]
+MaxRequests = 2
+CountsRequests = 6
