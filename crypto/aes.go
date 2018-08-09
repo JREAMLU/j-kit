@@ -9,6 +9,8 @@ import (
 	"errors"
 	"math/rand"
 	"time"
+
+	"github.com/JREAMLU/j-kit/constant"
 )
 
 var (
@@ -20,12 +22,12 @@ var (
 func AESEncrypter(src string, encrypteKey string) (string, []byte, error) {
 	key, err := hex.DecodeString(encrypteKey)
 	if err != nil {
-		return "", nil, err
+		return constant.EmptyStr, nil, err
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", nil, err
+		return constant.EmptyStr, nil, err
 	}
 
 	iv := randomIV()
