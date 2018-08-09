@@ -1,22 +1,21 @@
 package crypto
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestEncrypt(t *testing.T) {
-	Convey("encrypt test", t, func() {
-		ciphertext, token, err := AESEncrypter("123")
-		h, _ := HMacSha1([]byte(ciphertext), "abc", true)
-		fmt.Println("++++++++++++: ", h)
-		t.Log(err)
-		t.Log(ciphertext)
-		t.Log(token)
+	key := "0F10F6CB2F5369C14D14FA07BAD302267901240CC8C845DD2C645FBD149A11C9"
 
-		data, err := AESDecrypter(ciphertext)
+	Convey("encrypt test", t, func() {
+		ciphertext, iv, err := AESEncrypter("123", key)
+		t.Log(err)
+		t.Log(iv)
+		t.Log(ciphertext)
+
+		data, err := AESDecrypter(ciphertext, key, iv)
 		t.Log(err)
 		t.Log(string(data))
 	})
