@@ -11,6 +11,7 @@
 
 -   md5
 -   hash
+-   aes
 
 ## database
 
