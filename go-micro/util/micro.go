@@ -10,9 +10,11 @@ import (
 
 	"github.com/hashicorp/consul/api"
 	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/broker"
 	microClient "github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/registry"
 	microServer "github.com/micro/go-micro/server"
+	brokerKafka "github.com/micro/go-plugins/broker/kafka"
 	client "github.com/micro/go-plugins/client/grpc"
 	register "github.com/micro/go-plugins/registry/consul"
 	server "github.com/micro/go-plugins/server/grpc"
@@ -20,7 +22,6 @@ import (
 	microGobreaker "github.com/micro/go-plugins/wrapper/breaker/gobreaker"
 	microRatelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit"
 	"github.com/sony/gobreaker"
-	// brokerKafka "github.com/micro/go-plugins/broker/kafka"
 )
 
 // NewMicroService new micro service
@@ -74,11 +75,11 @@ func NewMicroService(config *Config) micro.Service {
 		micro.Version(config.Service.Version),
 		micro.WrapClient(opentracing.NewClientWrapper(t)),
 		micro.WrapHandler(opentracing.NewHandlerWrapper(t)),
-		// micro.Broker(brokerKafka.NewBroker(
-		// 	broker.Option(func(opt *broker.Options) {
-		// 		opt.Addrs = []string{"10.200.119.128:9092"}
-		// 	}),
-		// )),
+		micro.Broker(brokerKafka.NewBroker(
+			broker.Option(func(opt *broker.Options) {
+				opt.Addrs = config.Kafka.Broker
+			}),
+		)),
 	)
 
 	service.Init(

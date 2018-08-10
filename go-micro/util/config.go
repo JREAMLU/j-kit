@@ -51,6 +51,7 @@ type Config struct {
 	}
 
 	Kafka struct {
+		Broker        []string
 		ZipkinBroker  []string
 		ZipkinTopic   string
 		BigdataBroker []string
@@ -69,6 +70,7 @@ type Config struct {
 const (
 	serviceGo               = "service/go/"
 	_zipkin                 = "zipkin"
+	_broker                 = "broker"
 	_bigdata                = "bigdata"
 	_consul                 = "registry"
 	zipkinTopic             = "zipkin"
@@ -120,6 +122,11 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	// kafka zookeeper
 	if config != nil {
 		config.Kafka.ZipkinBroker, config.Kafka.ZipkinTopic, err = client.GetKafkas(_zipkin)
+		if err != nil {
+			return err
+		}
+
+		config.Kafka.Broker, _, err = client.GetKafkas(_broker)
 		if err != nil {
 			return err
 		}
@@ -192,6 +199,8 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 
 	log.Printf("Zipkin Broker: %v", config.Kafka.ZipkinBroker)
 	log.Printf("Zipkin Topic: %v", config.Kafka.ZipkinTopic)
+
+	log.Printf("Broker Broker: %v", config.Kafka.Broker)
 
 	log.Printf("Service RegisterInterval: %v", config.Service.RegisterInterval)
 	log.Printf("Service RegisterTTL: %v", config.Service.RegisterTTL)
