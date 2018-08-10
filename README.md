@@ -20,6 +20,8 @@
     -   toml
 
 -   mongo
+    -   consul
+    -   toml
 
 -   mysql
     -   gorm
