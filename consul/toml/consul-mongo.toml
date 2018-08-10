@@ -1,0 +1,9 @@
+InstanceName = "BGBarrage" #InstanceName is base key
+
+Prefix = "mongodb://"
+URLs = [
+    "10.200.150.50:27017",
+    "10.200.150.51:27017",
+    "10.200.150.52:27017",
+]
+DBName = "Barrage"

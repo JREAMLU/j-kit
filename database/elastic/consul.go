@@ -17,8 +17,10 @@ type Config struct {
 	URLs         []string
 }
 
-var esCients map[string]*Elastic
-var mutex sync.Mutex
+var (
+	esClients map[string]*Elastic
+	mutex     sync.Mutex
+)
 
 // Watch watch config
 func Watch(consulAddr string, reloadConfig chan string, names ...string) {
@@ -41,12 +43,12 @@ func watching(consulAddr string, debug bool, names ...string) {
 				log.Printf("changed: %v \r\n", node)
 				nEsclient, err := LoadConfig(consulAddr, false, debug, node)
 				if err != nil {
-					log.Printf("Failed on mysql LoadConfig, watchedNode: %v, err: %v \r\n", node, err)
+					log.Printf("Failed on elastic LoadConfig, watchedNode: %v, err: %v \r\n", node, err)
 					continue
 				}
 
 				mutex.Lock()
-				esCients[node] = nEsclient[node]
+				esClients[node] = nEsclient[node]
 				mutex.Unlock()
 			}
 		}
@@ -56,7 +58,7 @@ func watching(consulAddr string, debug bool, names ...string) {
 // Load load elastic
 func Load(consulAddr string, isWatching, debug bool, names ...string) error {
 	var err error
-	esCients, err = LoadConfig(consulAddr, isWatching, debug, names...)
+	esClients, err = LoadConfig(consulAddr, isWatching, debug, names...)
 	if err != nil {
 		return err
 	}
@@ -84,8 +86,8 @@ func LoadConfig(consulAddr string, isWatching, debug bool, names ...string) (map
 
 // GetElastic get elastic
 func GetElastic(instanceName string) *Elastic {
-	if _, ok := esCients[instanceName]; ok {
-		return esCients[instanceName]
+	if _, ok := esClients[instanceName]; ok {
+		return esClients[instanceName]
 	}
 
 	return nil
@@ -93,7 +95,7 @@ func GetElastic(instanceName string) *Elastic {
 
 // GetAllElastic get all elastic
 func GetAllElastic() map[string]*Elastic {
-	return esCients
+	return esClients
 }
 
 func loadByNames(client *consul.Client, names []string) (map[string]*Elastic, error) {

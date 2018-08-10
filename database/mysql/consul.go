@@ -32,7 +32,10 @@ const (
 	MaxIdleConns = 60
 )
 
-var mutex sync.Mutex
+var (
+	gx    map[string]*gorm.DB
+	mutex sync.Mutex
+)
 
 // Config mysql config in consul
 type Config struct {
@@ -57,8 +60,6 @@ type readonly struct {
 	UserID   string
 	CharSet  string
 }
-
-var gx map[string]*gorm.DB
 
 // Watch watch config
 func Watch(consulAddr string, reloadConfig chan string, names ...string) {
