@@ -3,6 +3,7 @@ package opentracing
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -108,22 +109,43 @@ func (o *otWrapper) Call(ctx context.Context, req client.Request, rsp interface{
 
 	defer span.Finish()
 
-	r := req.Request()
-	t := reflect.TypeOf(r)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	fieldNum := t.NumField()
-	result := make([]string, 0, fieldNum)
-	for i := 0; i < fieldNum; i++ {
-		result = append(result, t.Field(i).Name)
+	/*
+		r := req.Request()
+		t := reflect.TypeOf(r)
+		if t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+		fieldNum := t.NumField()
+		result := make([]string, 0, fieldNum)
+		for i := 0; i < fieldNum; i++ {
+			result = append(result, t.Field(i).Name)
+		}
+	*/
+
+	var params string
+	t := reflect.TypeOf(req.Request())
+	if t.Kind() != reflect.Ptr {
+		switch t.Kind() {
+		case reflect.Map:
+			// map[string]interface
+			var paramsRaw []byte
+			paramsRaw, err = json.Marshal(req.Request().(map[string]interface{}))
+			if err != nil {
+				params = err.Error()
+			} else {
+				params = string(paramsRaw)
+			}
+		}
+	} else {
+		// proto
+		params = req.Request().(proto.Message).String()
 	}
 
 	span.LogKV(
 		TargetSRV, req.Service(),
 		Method, req.Method(),
 		ContentType, req.ContentType(),
-		Params, req.Request().(proto.Message).String(),
+		Params, params,
 	)
 
 	err = o.Client.Call(ctx, req, rsp, opts...)

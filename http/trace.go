@@ -210,6 +210,8 @@ func HandlerHTTPRequestGin(tracer opentracing.Tracer, operationName string) gin.
 			return
 		}
 
+		c.Set("raw", rawBody)
+
 		span.LogKV(
 			FromSRV, c.Request.RemoteAddr,
 			TargetSRV, url,
