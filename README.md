@@ -38,7 +38,7 @@
 
 -   trace zipkin
     -   rpc & http trace
-    -   add ctx & header toogle
+    -   add ctx & header toogle: x-b3-toggle
     -   log event
     -   call
     -   handle
