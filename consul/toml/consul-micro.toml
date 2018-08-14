@@ -13,8 +13,11 @@ Auth = true
 Secret = "abc"
 
 [circuitBreaker]
-MaxRequests = 2
-CountsRequests = 6
+MaxRequests = 100
+CountsRequests = 1000
+FailureRatio = 0.6
+Interval = 30
+Timeout = 90
 
 [rateLimit]
 ClientRate = 2000.0
