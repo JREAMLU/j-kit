@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	microGobreaker "github.com/JREAMLU/j-kit/go-micro/plugins/wrapper/breaker/gobreaker"
+	microRatelimit "github.com/JREAMLU/j-kit/go-micro/plugins/wrapper/ratelimiter/ratelimit"
 	"github.com/JREAMLU/j-kit/go-micro/trace/opentracing"
 	"github.com/juju/ratelimit"
 
@@ -19,8 +21,6 @@ import (
 	register "github.com/micro/go-plugins/registry/consul"
 	server "github.com/micro/go-plugins/server/grpc"
 	transport "github.com/micro/go-plugins/transport/grpc"
-	microGobreaker "github.com/micro/go-plugins/wrapper/breaker/gobreaker"
-	microRatelimit "github.com/micro/go-plugins/wrapper/ratelimiter/ratelimit"
 	"github.com/sony/gobreaker"
 )
 
