@@ -33,7 +33,7 @@ type Config struct {
 		Interval int
 		// when StateOpen, after every timeout, change to StateHalfOpen
 		Timeout int
-		// failure requests
+		// in interval counts requests
 		CountsRequests uint32
 		// failure ratio
 		FailureRatio float64
