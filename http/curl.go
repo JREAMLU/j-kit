@@ -9,7 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/JREAMLU/j-kit/ext"
 	"github.com/JREAMLU/j-kit/go-micro/util"
+	"github.com/JREAMLU/j-kit/uuid"
+
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/sony/gobreaker"
 )
@@ -60,8 +63,13 @@ func NewRequests(tracer opentracing.Tracer) *Requests {
 }
 
 func defaultCircuitBreakerSetting() *gobreaker.CircuitBreaker {
+	gid, err := uuid.Generate()
+	if err != nil {
+		panic(err)
+	}
+
 	return gobreaker.NewCircuitBreaker(gobreaker.Settings{
-		Name:        cbName,
+		Name:        ext.StringSplice(cbName, "-", gid),
 		MaxRequests: cbMaxRequests,
 		Interval:    time.Duration(cbInterval) * time.Second,
 		Timeout:     time.Duration(cbTimeout) * time.Second,

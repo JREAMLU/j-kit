@@ -13,11 +13,19 @@ Auth = true
 Secret = "abc"
 
 [circuitBreaker]
-MaxRequests = 100
-CountsRequests = 1000
-FailureRatio = 0.6
-Interval = 30
-Timeout = 90
+    [circuitBreaker."go.micro.srv.s2"] #target service
+    MaxRequests = 100
+    CountsRequests = 1000
+    FailureRatio = 0.6 #calculate in 30s/Requests
+    Interval = 30 #closed clean every 30s
+    Timeout = 90 #open->halfopen after 30s
+
+    [circuitBreaker."go.micro.srv.s3"]
+    MaxRequests = 100
+    CountsRequests = 1000
+    FailureRatio = 0.6 #calculate in 30s/Requests
+    Interval = 30 #closed clean every 30s
+    Timeout = 90 #open->halfopen after 30s
 
 [rateLimit]
 ClientRate = 2000.0

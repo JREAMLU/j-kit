@@ -41,20 +41,7 @@ func NewMicroService(config *Config) micro.Service {
 
 	service := micro.NewService(
 		micro.Client(client.NewClient(
-			microClient.Wrap(microGobreaker.NewClientWrapper(
-				gobreaker.NewCircuitBreaker(gobreaker.Settings{
-					Name:        config.Service.Name,
-					MaxRequests: config.CircuitBreaker.MaxRequests,
-					Interval:    time.Duration(config.CircuitBreaker.Interval) * time.Second,
-					Timeout:     time.Duration(config.CircuitBreaker.Timeout) * time.Second,
-					ReadyToTrip: func(counts gobreaker.Counts) bool {
-						failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
-						return counts.Requests >= config.CircuitBreaker.CountsRequests && failureRatio >= config.CircuitBreaker.FailureRatio
-					},
-					OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
-					},
-				}),
-			)),
+			microClient.Wrap(microGobreaker.NewClientWrapper(circuitBreakers(config))),
 			microClient.Wrap(microRatelimit.NewClientWrapper(clientBucket, config.RateLimit.ClientWait)),
 		)),
 		micro.Server(server.NewServer(
@@ -88,4 +75,21 @@ func NewMicroService(config *Config) micro.Service {
 	)
 
 	return service
+}
+
+func circuitBreakers(config *Config) map[string]*gobreaker.CircuitBreaker {
+	// @TODO map
+	return nil
+	// return gobreaker.NewCircuitBreaker(gobreaker.Settings{
+	// 	Name:        config.Service.Name,
+	// 	MaxRequests: config.CircuitBreaker.MaxRequests,
+	// 	Interval:    time.Duration(config.CircuitBreaker.Interval) * time.Second,
+	// 	Timeout:     time.Duration(config.CircuitBreaker.Timeout) * time.Second,
+	// 	ReadyToTrip: func(counts gobreaker.Counts) bool {
+	// 		failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+	// 		return counts.Requests >= config.CircuitBreaker.CountsRequests && failureRatio >= config.CircuitBreaker.FailureRatio
+	// 	},
+	// 	OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+	// 	},
+	// })
 }

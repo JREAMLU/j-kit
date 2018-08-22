@@ -26,7 +26,7 @@ type Config struct {
 		URL  string
 	}
 
-	CircuitBreaker struct {
+	CircuitBreaker map[string]struct {
 		// when StateHalfOpen, allow how many requests try in
 		MaxRequests uint32
 		// when StateClosed, after every interval time, clean Counts.Requests (failure requests)
@@ -161,24 +161,29 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	}
 
 	// circuit Breaker
-	if config.CircuitBreaker.MaxRequests == 0 {
-		config.CircuitBreaker.MaxRequests = 100
-	}
+	for circuitName, circuitBreaker := range config.CircuitBreaker {
+		if circuitBreaker.MaxRequests == 0 {
+			circuitBreaker.MaxRequests = 100
+		}
 
-	if config.CircuitBreaker.FailureRatio == 0 {
-		config.CircuitBreaker.FailureRatio = 0.6
-	}
+		if circuitBreaker.FailureRatio == 0 {
+			circuitBreaker.FailureRatio = 0.6
+		}
 
-	if config.CircuitBreaker.Interval == 0 {
-		config.CircuitBreaker.Interval = 30
-	}
+		if circuitBreaker.Interval == 0 {
+			circuitBreaker.Interval = 30
+		}
 
-	if config.CircuitBreaker.Timeout == 0 {
-		config.CircuitBreaker.Timeout = 90
-	}
+		if circuitBreaker.Timeout == 0 {
+			circuitBreaker.Timeout = 90
+		}
 
-	if config.CircuitBreaker.CountsRequests == 0 {
-		config.CircuitBreaker.CountsRequests = 1000
+		if circuitBreaker.CountsRequests == 0 {
+			circuitBreaker.CountsRequests = 1000
+		}
+
+		log.Printf("%v CircuitBreaker MaxRequests: %v, FailureRatio: %v, Interval: %v, Timeout: %v, CountsRequests: %v",
+			circuitName, circuitBreaker.MaxRequests, circuitBreaker.FailureRatio, circuitBreaker.Interval, circuitBreaker.Timeout, circuitBreaker.CountsRequests)
 	}
 
 	if config.RateLimit.ClientRate == 0 {
@@ -208,12 +213,6 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	if config.Web.Port != 0 {
 		log.Printf("Web Host: %v Port: %v", config.Web.Host, config.Web.Port)
 	}
-
-	log.Printf("CircuitBreaker MaxRequests: %v", config.CircuitBreaker.MaxRequests)
-	log.Printf("CircuitBreaker FailureRatio: %v", config.CircuitBreaker.FailureRatio)
-	log.Printf("CircuitBreaker Interval: %v", config.CircuitBreaker.Interval)
-	log.Printf("CircuitBreaker Timeout: %v", config.CircuitBreaker.Timeout)
-	log.Printf("CircuitBreaker CountsRequests: %v", config.CircuitBreaker.CountsRequests)
 
 	log.Printf("RateLimit ClientRate: %v", config.RateLimit.ClientRate)
 	log.Printf("RateLimit ClientCapacity: %v", config.RateLimit.ClientCapacity)
