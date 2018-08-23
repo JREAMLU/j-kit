@@ -36,13 +36,12 @@ func NewMicroService(config *Config) micro.Service {
 		panic(err)
 	}
 
-	// clientBucket := ratelimit.NewBucketWithRate(config.RateLimit.ClientRate, config.RateLimit.ClientCapacity)
 	serverBucket := ratelimit.NewBucketWithRate(config.ServerRateLimit.Rate, config.ServerRateLimit.Capacity)
 
 	service := micro.NewService(
 		micro.Client(client.NewClient(
 			microClient.Wrap(microGobreaker.NewClientWrapper(circuitBreakers(config))),
-			microClient.Wrap(microRatelimit.NewClientWrapper(clientBucket, config.RateLimit.ClientWait)),
+			microClient.Wrap(microRatelimit.NewClientWrapper(clientBuckets(config))),
 		)),
 		micro.Server(server.NewServer(
 			microServer.WrapHandler(microRatelimit.NewHandlerWrapper(serverBucket, config.ServerRateLimit.Wait)),
@@ -97,4 +96,16 @@ func circuitBreakers(config *Config) map[string]*gobreaker.CircuitBreaker {
 	}
 
 	return cbs
+}
+
+func clientBuckets(config *Config) (map[string]*ratelimit.Bucket, bool) {
+	bs := make(map[string]*ratelimit.Bucket, len(config.ClientRateLimits))
+	var wait bool
+
+	for rateName, rateLimit := range config.ClientRateLimits {
+		bs[rateName] = ratelimit.NewBucketWithRate(rateLimit.Rate, rateLimit.Capacity)
+		wait = rateLimit.Wait
+	}
+
+	return bs, wait
 }

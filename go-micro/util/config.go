@@ -198,7 +198,7 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 			rateLimit.Capacity = 10000
 		}
 
-		log.Printf("%v RateLimit ClientRate: %v, ClientCapacity: %v, ClientWait: %v", rateLimit.Rate, rateLimit.Capacity, rateLimit.Wait)
+		log.Printf("%v RateLimit ClientRate: %v, ClientCapacity: %v, ClientWait: %v", rateName, rateLimit.Rate, rateLimit.Capacity, rateLimit.Wait)
 	}
 
 	if config.ServerRateLimit.Rate == 0 {
