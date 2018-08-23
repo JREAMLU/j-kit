@@ -78,18 +78,23 @@ func NewMicroService(config *Config) micro.Service {
 }
 
 func circuitBreakers(config *Config) map[string]*gobreaker.CircuitBreaker {
-	// @TODO map
-	return nil
-	// return gobreaker.NewCircuitBreaker(gobreaker.Settings{
-	// 	Name:        config.Service.Name,
-	// 	MaxRequests: config.CircuitBreaker.MaxRequests,
-	// 	Interval:    time.Duration(config.CircuitBreaker.Interval) * time.Second,
-	// 	Timeout:     time.Duration(config.CircuitBreaker.Timeout) * time.Second,
-	// 	ReadyToTrip: func(counts gobreaker.Counts) bool {
-	// 		failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
-	// 		return counts.Requests >= config.CircuitBreaker.CountsRequests && failureRatio >= config.CircuitBreaker.FailureRatio
-	// 	},
-	// 	OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
-	// 	},
-	// })
+	cbs := make(map[string]*gobreaker.CircuitBreaker, len(config.CircuitBreaker))
+
+	for circuitName, circuitBreaker := range config.CircuitBreaker {
+		cbs[circuitName] = gobreaker.NewCircuitBreaker(gobreaker.Settings{
+			Name:        circuitName,
+			MaxRequests: circuitBreaker.MaxRequests,
+			Interval:    time.Duration(circuitBreaker.Interval) * time.Second,
+			Timeout:     time.Duration(circuitBreaker.Timeout) * time.Second,
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+				return counts.Requests >= circuitBreaker.CountsRequests && failureRatio >= circuitBreaker.FailureRatio
+			},
+			OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+			},
+		})
+
+	}
+
+	return cbs
 }
