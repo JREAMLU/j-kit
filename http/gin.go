@@ -66,9 +66,9 @@ func NewHTTPService(config *util.Config) (micro.Service, *gin.Engine, opentracin
 }
 
 func circuitBreakers(config *util.Config) map[string]*gobreaker.CircuitBreaker {
-	cbs := make(map[string]*gobreaker.CircuitBreaker, len(config.CircuitBreaker))
+	cbs := make(map[string]*gobreaker.CircuitBreaker, len(config.CircuitBreakers))
 
-	for circuitName, circuitBreaker := range config.CircuitBreaker {
+	for circuitName, circuitBreaker := range config.CircuitBreakers {
 		cbs[circuitName] = gobreaker.NewCircuitBreaker(gobreaker.Settings{
 			Name:        circuitName,
 			MaxRequests: circuitBreaker.MaxRequests,

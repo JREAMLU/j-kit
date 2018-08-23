@@ -26,7 +26,7 @@ type Config struct {
 		URL  string
 	}
 
-	CircuitBreaker map[string]struct {
+	CircuitBreakers map[string]struct {
 		// when StateHalfOpen, allow how many requests try in
 		MaxRequests uint32
 		// when StateClosed, after every interval time, clean Counts.Requests (failure requests)
@@ -39,15 +39,18 @@ type Config struct {
 		FailureRatio float64
 	}
 
-	RateLimit struct {
+	ClientRateLimits map[string]struct {
 		// gvie bucket rate time (every time give bucket nums)
-		ClientRate float64
+		Rate float64
 		// total bucket
-		ClientCapacity int64
-		ClientWait     bool
-		ServerRate     float64
-		ServerCapacity int64
-		ServerWait     bool
+		Capacity int64
+		Wait     bool
+	}
+
+	ServerRateLimit struct {
+		Rate     float64
+		Capacity int64
+		Wait     bool
 	}
 
 	Kafka struct {
@@ -161,7 +164,7 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 	}
 
 	// circuit Breaker
-	for circuitName, circuitBreaker := range config.CircuitBreaker {
+	for circuitName, circuitBreaker := range config.CircuitBreakers {
 		if circuitBreaker.MaxRequests == 0 {
 			circuitBreaker.MaxRequests = 100
 		}
@@ -186,40 +189,34 @@ func loadConfig(consulAddr string, key string, sc interface{}) error {
 			circuitName, circuitBreaker.MaxRequests, circuitBreaker.FailureRatio, circuitBreaker.Interval, circuitBreaker.Timeout, circuitBreaker.CountsRequests)
 	}
 
-	if config.RateLimit.ClientRate == 0 {
-		config.RateLimit.ClientRate = 2000
+	for rateName, rateLimit := range config.ClientRateLimits {
+		if rateLimit.Rate == 0 {
+			rateLimit.Rate = 2000
+		}
+
+		if rateLimit.Capacity == 0 {
+			rateLimit.Capacity = 10000
+		}
+
+		log.Printf("%v RateLimit ClientRate: %v, ClientCapacity: %v, ClientWait: %v", rateLimit.Rate, rateLimit.Capacity, rateLimit.Wait)
 	}
 
-	if config.RateLimit.ClientCapacity == 0 {
-		config.RateLimit.ClientCapacity = 10000
+	if config.ServerRateLimit.Rate == 0 {
+		config.ServerRateLimit.Rate = 2000
 	}
 
-	if config.RateLimit.ServerRate == 0 {
-		config.RateLimit.ServerRate = 2000
+	if config.ServerRateLimit.Capacity == 0 {
+		config.ServerRateLimit.Capacity = 10000
 	}
 
-	if config.RateLimit.ServerCapacity == 0 {
-		config.RateLimit.ServerCapacity = 10000
-	}
-
-	log.Printf("Zipkin Broker: %v", config.Kafka.ZipkinBroker)
-	log.Printf("Zipkin Topic: %v", config.Kafka.ZipkinTopic)
-
+	log.Printf("RateLimit ServerRate: %v, ServerCapacity: %v, ServerWait: %v", config.ServerRateLimit.Rate, config.ServerRateLimit.Capacity, config.ServerRateLimit.Wait)
+	log.Printf("Zipkin Broker: %v, Topic: %v", config.Kafka.ZipkinBroker, config.Kafka.ZipkinTopic)
 	log.Printf("Broker Broker: %v", config.Kafka.Broker)
-
-	log.Printf("Service RegisterInterval: %v", config.Service.RegisterInterval)
-	log.Printf("Service RegisterTTL: %v", config.Service.RegisterTTL)
+	log.Printf("Service RegisterInterval: %v, RegisterTTL: %v", config.Service.RegisterInterval, config.Service.RegisterTTL)
 
 	if config.Web.Port != 0 {
 		log.Printf("Web Host: %v Port: %v", config.Web.Host, config.Web.Port)
 	}
-
-	log.Printf("RateLimit ClientRate: %v", config.RateLimit.ClientRate)
-	log.Printf("RateLimit ClientCapacity: %v", config.RateLimit.ClientCapacity)
-	log.Printf("RateLimit ClientWait: %v", config.RateLimit.ClientWait)
-	log.Printf("RateLimit ServerRate: %v", config.RateLimit.ServerRate)
-	log.Printf("RateLimit ServerCapacity: %v", config.RateLimit.ServerCapacity)
-	log.Printf("RateLimit ServerWait: %v", config.RateLimit.ServerWait)
 
 	return nil
 }

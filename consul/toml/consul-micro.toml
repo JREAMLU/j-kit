@@ -27,10 +27,13 @@ Secret = "abc"
     Interval = 30 #closed clean every 30s
     Timeout = 90 #open->halfopen after 30s
 
-[rateLimit]
-ClientRate = 2000.0
-ClientCapacity = 10000
-ClientWait = false
-ServerRate = 2000.0
-ServerCapacity = 10000
-ServerWait = false
+[clientRateLimits]
+    [clientRateLimits."go.micro.srv.s2"]
+    Rate = 2000.0
+    Capacity = 10000
+    Wait = false
+
+[serverRateLimit]
+Rate = 2000.0
+Capacity = 10000
+Wait = false

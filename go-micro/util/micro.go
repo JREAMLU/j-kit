@@ -36,8 +36,8 @@ func NewMicroService(config *Config) micro.Service {
 		panic(err)
 	}
 
-	clientBucket := ratelimit.NewBucketWithRate(config.RateLimit.ClientRate, config.RateLimit.ClientCapacity)
-	serverBucket := ratelimit.NewBucketWithRate(config.RateLimit.ServerRate, config.RateLimit.ServerCapacity)
+	// clientBucket := ratelimit.NewBucketWithRate(config.RateLimit.ClientRate, config.RateLimit.ClientCapacity)
+	serverBucket := ratelimit.NewBucketWithRate(config.ServerRateLimit.Rate, config.ServerRateLimit.Capacity)
 
 	service := micro.NewService(
 		micro.Client(client.NewClient(
@@ -45,7 +45,7 @@ func NewMicroService(config *Config) micro.Service {
 			microClient.Wrap(microRatelimit.NewClientWrapper(clientBucket, config.RateLimit.ClientWait)),
 		)),
 		micro.Server(server.NewServer(
-			microServer.WrapHandler(microRatelimit.NewHandlerWrapper(serverBucket, config.RateLimit.ServerWait)),
+			microServer.WrapHandler(microRatelimit.NewHandlerWrapper(serverBucket, config.ServerRateLimit.Wait)),
 		)),
 		micro.Registry(register.NewRegistry(
 			registry.Option(func(opts *registry.Options) {
@@ -78,9 +78,9 @@ func NewMicroService(config *Config) micro.Service {
 }
 
 func circuitBreakers(config *Config) map[string]*gobreaker.CircuitBreaker {
-	cbs := make(map[string]*gobreaker.CircuitBreaker, len(config.CircuitBreaker))
+	cbs := make(map[string]*gobreaker.CircuitBreaker, len(config.CircuitBreakers))
 
-	for circuitName, circuitBreaker := range config.CircuitBreaker {
+	for circuitName, circuitBreaker := range config.CircuitBreakers {
 		cbs[circuitName] = gobreaker.NewCircuitBreaker(gobreaker.Settings{
 			Name:        circuitName,
 			MaxRequests: circuitBreaker.MaxRequests,
