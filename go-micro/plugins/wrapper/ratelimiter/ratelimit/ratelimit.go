@@ -20,8 +20,8 @@ func clientLimit(bs map[string]*ratelimit.Bucket, wait bool, errID string) func(
 	return func(req server.Request) error {
 		if _, ok := bs[req.Service()]; ok {
 			if wait {
-				time.Sleep(bs["abc"].Take(1))
-			} else if bs["abc"].TakeAvailable(1) == 0 {
+				time.Sleep(bs[req.Service()].Take(1))
+			} else if bs[req.Service()].TakeAvailable(1) == 0 {
 				return errors.New(errID, "too many request", 429)
 			}
 		}
