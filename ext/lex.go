@@ -24,7 +24,7 @@ func (i item) String() string {
 	case i.typ == itemError:
 		return i.val
 	}
-	return fmt.Sprintf("%s:%q", i.typ, i.val)
+	return fmt.Sprintf("%v:%s", i.typ, i.val)
 }
 
 type itemType int
