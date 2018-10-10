@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -56,6 +57,7 @@ func NewRequests(tracer opentracing.Tracer) *Requests {
 				IdleConnTimeout:     maxConnectionIdleTime,
 			},
 			Timeout: time.Duration(timeout) * time.Second,
+			Jar:     nil,
 		},
 		TraceRequest: CallHTTPRequest(tracer),
 		Cb:           defaultCircuitBreakerSetting(),
@@ -106,6 +108,11 @@ func (r *Requests) SetIdleConnTimeout(maxConnectionIdleTime time.Duration) {
 // SetRetryTimes set retry times
 func (r *Requests) SetRetryTimes(times int64) {
 	retryTimes = times
+}
+
+// SetJar http cookiejar
+func (r *Requests) SetJar(jar *cookiejar.Jar) {
+	r.HTTPClient.Jar = jar
 }
 
 type cstring string
