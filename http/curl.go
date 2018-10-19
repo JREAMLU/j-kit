@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"strings"
 	"time"
 
@@ -102,6 +103,20 @@ func (r *Requests) SetIdleConnTimeout(maxConnectionIdleTime time.Duration) {
 	r.HTTPClient.Transport = &http.Transport{
 		MaxIdleConnsPerHost: int(maxIdleConnections),
 		IdleConnTimeout:     maxConnectionIdleTime,
+	}
+}
+
+// SetProxy set proxy
+func (r *Requests) SetProxy(addr string) {
+	proxy, err := url.Parse(addr)
+	if err != nil {
+		proxy = nil
+	}
+
+	r.HTTPClient.Transport = &http.Transport{
+		MaxIdleConnsPerHost: int(maxIdleConnections),
+		IdleConnTimeout:     maxConnectionIdleTime,
+		Proxy:               http.ProxyURL(proxy),
 	}
 }
 
