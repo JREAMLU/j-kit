@@ -108,6 +108,10 @@ func (r *Requests) SetIdleConnTimeout(maxConnectionIdleTime time.Duration) {
 
 // SetProxy set proxy
 func (r *Requests) SetProxy(addr string) {
+	if addr == "" {
+		return
+	}
+
 	proxy, err := url.Parse(addr)
 	if err != nil {
 		proxy = nil
