@@ -42,6 +42,11 @@ func NewMicroService(config *Config) micro.Service {
 		micro.Client(client.NewClient(
 			microClient.Wrap(microGobreaker.NewClientWrapper(circuitBreakers(config))),
 			microClient.Wrap(microRatelimit.NewClientWrapper(clientBuckets(config))),
+			microClient.DialTimeout(time.Second*2),     // default 5s
+			microClient.RequestTimeout(time.Second*10), // default 5s
+			microClient.Retries(1),             // default 1
+			microClient.PoolTTL(time.Minute*1), // default 1m
+			microClient.PoolSize(100),          // default 100
 		)),
 		micro.Server(server.NewServer(
 			microServer.WrapHandler(microRatelimit.NewHandlerWrapper(serverBucket, config.ServerRateLimit.Wait)),
