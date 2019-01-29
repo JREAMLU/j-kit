@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/JREAMLU/j-kit/constant"
 	"github.com/JREAMLU/j-kit/ext"
@@ -18,6 +19,16 @@ import (
 var (
 	// ErrPaddingSize padding error
 	ErrPaddingSize = errors.New("padding size error")
+	// ErrSrcNotEmpty not empty
+	ErrSrcNotEmpty = errors.New("src not empty")
+	// ErrSrcMod err mod
+	ErrSrcMod = errors.New("src mod no correct")
+	// ErrHashCheck hash check
+	ErrHashCheck = errors.New("hash check failed")
+	// ErrPadding padding err
+	ErrPadding = errors.New("padding err")
+	// ErrPaddingEq padding diff
+	ErrPaddingEq = errors.New("padding eq err")
 )
 
 // AESEncrypter aes encrypt
@@ -90,6 +101,7 @@ func EncryptCookie(src string, encrypteKey string, validationKey string) (string
 	ivLength := len(iv)
 
 	padding := ivLength - (len(src) % ivLength)
+	// repeat string() == chr
 	src = ext.StringSplice(src, strings.Repeat(string(padding), padding))
 
 	mode := cipher.NewCBCEncrypter(block, iv)
@@ -111,6 +123,75 @@ func EncryptCookie(src string, encrypteKey string, validationKey string) (string
 	encryptedData := ext.StringSplice(hex.EncodeToString(iv), hex.EncodeToString([]byte(encrypted)), hash[:16])
 
 	return encryptedData, nil
+}
+
+// DecryptCookie aes decrypt cookie
+func DecryptCookie(src string, encrypteKey string, validationKey string) ([]byte, error) {
+	if len(src) <= 0 {
+		return nil, ErrSrcNotEmpty
+	}
+
+	key, err := hex.DecodeString(encrypteKey)
+	if err != nil {
+		return nil, err
+	}
+
+	vkey, err := hex.DecodeString(validationKey)
+	if err != nil {
+		return nil, err
+	}
+
+	//check encryptData mod == 0
+	if (len(src) % 2) != 0 {
+		return nil, ErrSrcMod
+	}
+
+	binSrc, err := hex.DecodeString(src)
+	if err != nil {
+		return nil, err
+	}
+	src = string(binSrc)
+	ivLength := len(randomIV())
+	hashSize := 8
+	hash := hex.EncodeToString([]byte(src[len(src)-hashSize:]))
+	needHashData := src[:len(src)-hashSize]
+	hashed, err := HMacSha256([]byte(needHashData), string(vkey))
+	if err != nil {
+		return nil, err
+	}
+
+	if hash != hashed[:16] {
+		return nil, ErrHashCheck
+	}
+
+	iv := []byte(src[:ivLength])
+
+	_src := src[ivLength : len(src)-hashSize]
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	dst := make([]byte, len(_src))
+	mode.CryptBlocks(dst, []byte(_src))
+
+	decryptedData, err := PKCS7UnPadding(dst, block.BlockSize())
+	if err != nil {
+		return nil, err
+	}
+
+	r, _ := utf8.DecodeRune(decryptedData[len(decryptedData)-1:])
+	padding := int(r)
+
+	if padding > len(decryptedData) {
+		return nil, ErrPadding
+	}
+
+	// TODO: strspn
+
+	return decryptedData[:len(decryptedData)-padding], nil
 }
 
 // PKCS7Padding pkcs7 padding
