@@ -8,9 +8,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/JREAMLU/j-kit/constant"
+	"github.com/JREAMLU/j-kit/ext"
 )
 
 var (
@@ -65,6 +67,50 @@ func AESDecrypter(src string, encrypteKey string, iv []byte) ([]byte, error) {
 	mode.CryptBlocks(dst, content)
 
 	return PKCS7UnPadding(dst, block.BlockSize())
+}
+
+// EncryptCookie aes encrypt cookie
+func EncryptCookie(src string, encrypteKey string, validationKey string) (string, error) {
+	key, err := hex.DecodeString(encrypteKey)
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	vkey, err := hex.DecodeString(validationKey)
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	iv := randomIV()
+	ivLength := len(iv)
+
+	padding := ivLength - (len(src) % ivLength)
+	src = ext.StringSplice(src, strings.Repeat(string(padding), padding))
+
+	mode := cipher.NewCBCEncrypter(block, iv)
+
+	content := []byte(src)
+	content = PKCS7Padding(content, block.BlockSize())
+	dst := make([]byte, len(content))
+	mode.CryptBlocks(dst, content)
+
+	// OPENSSL_RAW_DATA
+	encrypted := string(dst)
+
+	hashData := ext.StringSplice(string(iv), encrypted)
+	hash, err := HMacSha256([]byte(hashData), string(vkey))
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	encryptedData := ext.StringSplice(hex.EncodeToString(iv), hex.EncodeToString([]byte(encrypted)), hash[:16])
+
+	return encryptedData, nil
 }
 
 // PKCS7Padding pkcs7 padding

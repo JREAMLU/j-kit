@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"hash"
 	"io"
@@ -49,6 +50,17 @@ func HMacSha1(src []byte, key string, isCaps ...bool) (string, error) {
 
 	//hmac ,use sha1
 	return _hmac(src, key, sha1.New)
+}
+
+//HMacSha256 hmac-sha256
+func HMacSha256(src []byte, key string, isCaps ...bool) (string, error) {
+	if len(isCaps) > 0 && isCaps[0] == true {
+		s, err := _hmac(src, key, sha256.New)
+		return strings.ToUpper(s), err
+	}
+
+	//hmac ,use sha256
+	return _hmac(src, key, sha256.New)
 }
 
 func _hmac(src []byte, key string, h func() hash.Hash) (string, error) {
