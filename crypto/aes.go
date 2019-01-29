@@ -189,7 +189,9 @@ func DecryptCookie(src string, encrypteKey string, validationKey string) ([]byte
 		return nil, ErrPadding
 	}
 
-	// TODO: strspn
+	if padding > strings.Count(string(decryptedData[len(decryptedData)-padding:]), string(padding)) {
+		return nil, ErrHashCheck
+	}
 
 	return decryptedData[:len(decryptedData)-padding], nil
 }
