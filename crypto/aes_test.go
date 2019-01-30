@@ -59,8 +59,17 @@ func TestCookie(t *testing.T) {
 }
 
 func TestEDCookie(t *testing.T) {
-	key := "0F10F6CB2F5369C14D14FA07BAD302267901240CC8C845DD2C645FBD149A11C9"
-	vkey := "C985085862F161091EEEFE30F7DC9D62"
+	key, err := keyGen()
+	if err != nil {
+		panic(err)
+	}
+	vkey, err := keyGen()
+	if err != nil {
+		panic(err)
+	}
+
+	// key := "0F10F6CB2F5369C14D14FA07BAD302267901240CC8C845DD2C645FBD149A11C9"
+	// vkey := "C985085862F161091EEEFE30F7DC9D62"
 	data := `{"userID":10000}`
 
 	Convey("encrypt decrypt cookie test", t, func() {
