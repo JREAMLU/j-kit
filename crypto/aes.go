@@ -122,7 +122,7 @@ func EncryptCookie(src string, encrypteKey string, validationKey string) (string
 
 	encryptedData := ext.StringSplice(hex.EncodeToString(iv), hex.EncodeToString([]byte(encrypted)), hash[:16])
 
-	return encryptedData, nil
+	return strings.ToUpper(encryptedData), nil
 }
 
 // DecryptCookie aes decrypt cookie

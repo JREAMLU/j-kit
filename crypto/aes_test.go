@@ -58,6 +58,26 @@ func TestCookie(t *testing.T) {
 	})
 }
 
+func TestEDCookie(t *testing.T) {
+	key := "0F10F6CB2F5369C14D14FA07BAD302267901240CC8C845DD2C645FBD149A11C9"
+	vkey := "C985085862F161091EEEFE30F7DC9D62"
+	data := `{"userID":10000}`
+
+	Convey("encrypt decrypt cookie test", t, func() {
+		cookie, err := EncryptCookie(data, key, vkey)
+		t.Log(err)
+		t.Log(cookie)
+		So(err, ShouldBeNil)
+		So(cookie, ShouldNotBeEmpty)
+
+		raw, err := DecryptCookie(cookie, key, vkey)
+		t.Log(err)
+		t.Log(string(raw))
+		So(err, ShouldBeNil)
+		So(string(raw), ShouldEqual, data)
+	})
+}
+
 func cookieEncrpy(data, key string) (string, error) {
 	ciphertext, iv, err := AESEncrypter(data, key)
 	if err != nil {
