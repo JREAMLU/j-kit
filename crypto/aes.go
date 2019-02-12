@@ -14,6 +14,7 @@ import (
 
 	"github.com/JREAMLU/j-kit/constant"
 	"github.com/JREAMLU/j-kit/ext"
+	"lukechampine.com/adiantum"
 )
 
 var (
@@ -214,6 +215,102 @@ func PKCS7UnPadding(src []byte, blockSize int) ([]byte, error) {
 	}
 
 	return src[:(length - unpadding)], nil
+}
+
+// EncryptAdiantumCookie aes encrypt adiantum cookie
+func EncryptAdiantumCookie(src string, encrypteKey string, validationKey string) (string, error) {
+	key, err := hex.DecodeString(encrypteKey)
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	vkey, err := hex.DecodeString(validationKey)
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	// tweak
+	iv := randomIV()
+	ivLength := len(iv)
+
+	padding := ivLength - (len(src) % ivLength)
+	// repeat string() == chr
+	src = ext.StringSplice(src, strings.Repeat(string(padding), padding))
+	content := []byte(src)
+
+	// OPENSSL_RAW_DATA
+	adCipher := adiantum.New20(key)
+	encrypted := string(adCipher.Encrypt(content, iv))
+
+	hashData := ext.StringSplice(string(iv), encrypted)
+	hash, err := HMacSha256([]byte(hashData), string(vkey))
+	if err != nil {
+		return constant.EmptyStr, err
+	}
+
+	encryptedData := ext.StringSplice(hex.EncodeToString(iv), hex.EncodeToString([]byte(encrypted)), hash[:16])
+
+	return strings.ToUpper(encryptedData), nil
+}
+
+// DecryptAdiantumCookie aes decrypt adiantum cookie
+func DecryptAdiantumCookie(src string, encrypteKey string, validationKey string) ([]byte, error) {
+	if len(src) <= 0 {
+		return nil, ErrSrcNotEmpty
+	}
+
+	key, err := hex.DecodeString(encrypteKey)
+	if err != nil {
+		return nil, err
+	}
+
+	vkey, err := hex.DecodeString(validationKey)
+	if err != nil {
+		return nil, err
+	}
+
+	//check encryptData mod == 0
+	if (len(src) % 2) != 0 {
+		return nil, ErrSrcMod
+	}
+
+	binSrc, err := hex.DecodeString(src)
+	if err != nil {
+		return nil, err
+	}
+	src = string(binSrc)
+	ivLength := len(randomIV())
+	hashSize := 8
+	hash := hex.EncodeToString([]byte(src[len(src)-hashSize:]))
+	needHashData := src[:len(src)-hashSize]
+	hashed, err := HMacSha256([]byte(needHashData), string(vkey))
+	if err != nil {
+		return nil, err
+	}
+
+	if hash != hashed[:16] {
+		return nil, ErrHashCheck
+	}
+
+	// tweak
+	iv := []byte(src[:ivLength])
+	_src := src[ivLength : len(src)-hashSize]
+
+	adCipher := adiantum.New20(key)
+	decryptedData := adCipher.Decrypt([]byte(_src), iv)
+
+	r, _ := utf8.DecodeRune(decryptedData[len(decryptedData)-1:])
+	padding := int(r)
+
+	if padding > len(decryptedData) {
+		return nil, ErrPadding
+	}
+
+	if padding > strings.Count(string(decryptedData[len(decryptedData)-padding:]), string(padding)) {
+		return nil, ErrHashCheck
+	}
+
+	return decryptedData[:len(decryptedData)-padding], nil
 }
 
 func randomIV() (iv []byte) {
