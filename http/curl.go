@@ -205,6 +205,54 @@ RELOAD:
 	return rp, nil
 }
 
+//RequestCURLNotTrace ettp url
+func (r *Requests) RequestCURLNotTrace(ctx context.Context, Method string, URLStr string, Header map[string]string, Raw string, data interface{}) (rp Responses, err error) {
+	var i int64
+	req, err := http.NewRequest(
+		Method,
+		URLStr,
+		strings.NewReader(Raw),
+	)
+	if err != nil {
+		return rp, err
+	}
+
+	for hkey, hval := range Header {
+		req.Header.Set(hkey, hval)
+	}
+
+RELOAD:
+
+	resp, err := r.HTTPClient.Do(req)
+	if err != nil {
+		i++
+		if i < retryTimes {
+			goto RELOAD
+		}
+		return rp, err
+	}
+	defer resp.Body.Close()
+	rp.Response = resp
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return rp, err
+	}
+
+	rp.Body = string(body)
+
+	if data != nil {
+		err = json.Unmarshal(body, data)
+		if err != nil {
+			return rp, err
+		}
+
+		rp.Data = data
+	}
+
+	return rp, nil
+}
+
 // RequestRollingCURL batch curl
 func (r *Requests) RequestRollingCURL(Method string, URLStr string, Header map[string]string, Raw string, RetryTimes int64, data interface{}) (rp Responses, err error) {
 	return Responses{}, nil
